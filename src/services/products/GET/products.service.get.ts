@@ -1,19 +1,21 @@
+import type { IFilterOptions } from '@/pages/home/components/products-view/models/product-filter.interface';
 import type { IProduct } from '../models/products.interface';
-import mockProducts from '../../../mocks/products/product-mock';
+import { AppApiGateWayNoJWT } from '@/services/app.api.gateway-no-jwt';
 
-const getProducts = async (): Promise<IProduct[]> => {
+const getProducts = async (
+	filters: Partial<IFilterOptions> = {}
+): Promise<IProduct> => {
 	try {
-		// const response = await axios.get<Product[]>(`URL`);
-		// return response.data;
-
-		// Para el mock
-		return Promise.resolve(mockProducts);
+		const response = await AppApiGateWayNoJWT(`/product`, {
+			params: filters,
+		});
+		return response.data;
 	} catch (error) {
 		console.error('Error fetching products:', error);
 		throw error;
 	}
 };
 
-export const productService = {
+export const productsGetService = {
 	getProducts,
 };
