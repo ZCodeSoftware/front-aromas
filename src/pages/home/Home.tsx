@@ -1,16 +1,15 @@
-import { toast } from 'sonner';
+import Layout from '@/layout';
+import ProductsContainer from './components/products-view/ProductsContainer';
 
 const Home = () => {
 	return (
-		<div className='w-full h-screen flex flex-col items-center justify-center'>
-			<h1>Home</h1>
-			<p>Welcome to the home page!</p>
-			<button
-				onClick={() => toast.success('este es el home')}
-				className='bg-blue-500 text-white mt-2 px-4 py-2 rounded-md hover:bg-blue-600 transition duration-300 cursor-pointer'>
-				HOLA
-			</button>
-		</div>
+		<Layout>
+			<main className='w-full h-screen py-2'>
+				<section>
+					<ProductsContainer />
+				</section>
+			</main>
+		</Layout>
 	);
 };
 
