@@ -45,8 +45,8 @@ const FilterSection: React.FC<IFilterSectionProps> = ({
 						onClick={() => onToggle(value)}
 						className={`px-4 py-1.5 text-sm rounded-full border transition-colors duration-200 ${
 							selected.includes(value)
-								? 'bg-pink-100 border-pink-500 text-pink-600 font-semibold'
-								: 'bg-white border-gray-300 text-gray-700 hover:border-pink-400'
+								? 'bg-pink border-fucsia text-black'
+								: 'bg-white border-fucsia text-fucsia hover:bg-pink hover:text-black'
 						}`}>
 						{label}
 					</button>
@@ -77,7 +77,7 @@ export const ProductFilterModal: React.FC<IProductFilterModalProps> = ({
 		setTimeout(() => {
 			onClose();
 			setIsClosing(false);
-		}, 300);
+		}, 200);
 	};
 
 	useClickOutside(modalRef, handleClose);
@@ -177,7 +177,7 @@ export const ProductFilterModal: React.FC<IProductFilterModalProps> = ({
 						? 'animate-slide-out-to-right'
 						: 'animate-slide-in-from-right'
 				}`}>
-				<header className='flex items-center justify-between p-4 border-b-2 border-cyan-400'>
+				<header className='flex items-center justify-between p-4 border-b-2 border-gray_line'>
 					<h2 className='text-xl font-bold text-gray-800'>
 						Filtrar Productos
 					</h2>
@@ -192,10 +192,11 @@ export const ProductFilterModal: React.FC<IProductFilterModalProps> = ({
 						<h3 className='text-md font-semibold text-gray-700 mb-3'>
 							Rango de precios
 						</h3>
-						<div className='flex items-center gap-4'>
+						<div className='flex items-center gap-4 w-2/4'>
 							<Input
 								type='number'
 								placeholder='0'
+								min={0}
 								value={localFilters.priceMin ?? ''}
 								onChange={(e) =>
 									handlePriceChange(
@@ -203,12 +204,18 @@ export const ProductFilterModal: React.FC<IProductFilterModalProps> = ({
 										e.target.value
 									)
 								}
-								className='text-center border-pink-300 rounded-md focus:border-pink-500 focus:ring-pink-500'
+								style={{
+									outline: 'none',
+									boxShadow: 'none',
+									borderColor: '#EB5480',
+								}}
+								className='border-fucsia rounded-md text-start'
 							/>
 							<span className='text-gray-500'>-</span>
 							<Input
 								type='number'
 								placeholder='1000'
+								min={0}
 								value={localFilters.priceMax ?? ''}
 								onChange={(e) =>
 									handlePriceChange(
@@ -216,7 +223,12 @@ export const ProductFilterModal: React.FC<IProductFilterModalProps> = ({
 										e.target.value
 									)
 								}
-								className='text-center border-pink-300 rounded-md focus:border-pink-500 focus:ring-pink-500'
+								style={{
+									outline: 'none',
+									boxShadow: 'none',
+									borderColor: '#EB5480',
+								}}
+								className='text-start border-fucsia rounded-md'
 							/>
 						</div>
 					</div>
@@ -260,8 +272,8 @@ export const ProductFilterModal: React.FC<IProductFilterModalProps> = ({
 								onClick={() => handleAvailabilityToggle(true)}
 								className={`px-4 py-1.5 text-sm rounded-full border transition-colors duration-200 ${
 									localFilters.hasStock === true
-										? 'bg-pink-100 border-pink-500 text-pink-600 font-semibold'
-										: 'bg-white border-gray-300 text-gray-700 hover:border-pink-400'
+										? 'bg-pink border-fucsia text-black'
+										: 'bg-white border-fucsia text-fucsia hover:bg-pink hover:text-black'
 								}`}>
 								En stock
 							</button>
@@ -269,24 +281,24 @@ export const ProductFilterModal: React.FC<IProductFilterModalProps> = ({
 								onClick={() => handleAvailabilityToggle(false)}
 								className={`px-4 py-1.5 text-sm rounded-full border transition-colors duration-200 ${
 									localFilters.hasStock === false
-										? 'bg-pink-100 border-pink-500 text-pink-600 font-semibold'
-										: 'bg-white border-gray-300 text-gray-700 hover:border-pink-400'
+										? 'bg-pink border-fucsia text-black'
+										: 'bg-white border-fucsia text-fucsia hover:bg-pink hover:text-black'
 								}`}>
 								Agotado
 							</button>
 						</div>
 					</div>
 				</main>
-				<footer className='p-4 border-t-2 border-cyan-400 space-y-3'>
+				<footer className='p-4 border-t-2 border-gray_line space-y-3'>
 					<Button
 						onClick={handleApply}
-						className='w-full bg-pink-400 hover:bg-pink-500 text-white font-bold py-3 rounded-xl'>
+						className='w-full bg-pink hover:bg-pink text-gray_text font-bold py-3 rounded-xl'>
 						Aplicar filtros
 					</Button>
 					<Button
 						onClick={handleClear}
 						variant='outline'
-						className='w-full border-pink-400 text-pink-500 hover:bg-pink-50 hover:text-pink-600 font-bold py-3 rounded-xl'>
+						className='w-full border-fucsia text-fucsia hover:bg-pink font-bold py-3 rounded-xl'>
 						Limpiar filtros
 					</Button>
 				</footer>

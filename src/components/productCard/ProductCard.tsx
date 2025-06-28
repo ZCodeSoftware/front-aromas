@@ -57,7 +57,7 @@ const ProductCard = ({ product }: IProductCardProps) => {
 					</div>
 					<button className='absolute top-3 right-3 bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors hover:cursor-pointer'>
 						<Heart
-							className='h-5 w-5 text-pink-500'
+							className='h-5 w-5 text-fucsia'
 							strokeWidth={1.5}
 						/>
 					</button>
@@ -67,7 +67,7 @@ const ProductCard = ({ product }: IProductCardProps) => {
 						<CardTitle className='text-lg font-bold text-gray-800'>
 							{product.name}
 						</CardTitle>
-						<p className='text-lg font-bold text-[#EB5480] whitespace-nowrap pl-4'>
+						<p className='text-lg font-bold text-fucsia whitespace-nowrap pl-4'>
 							${product.price}
 						</p>
 					</div>
@@ -82,7 +82,7 @@ const ProductCard = ({ product }: IProductCardProps) => {
 					</CardDescription>
 				</CardContent>
 				<CardFooter className='py-2 px-0 pt-0 mt-auto'>
-					<button className='w-full bg-[#FFB1C8] text-gray-900 font-bold py-2 px-4 rounded-4xl flex items-center justify-center gap-2 border border-transparent hover:border-pink-400 transition-colors hover:cursor-pointer'>
+					<button className='w-full bg-pink text-gray-900 font-bold py-2 px-4 rounded-3xl flex items-center justify-center gap-2 border border-transparent hover:border-fucsia transition-colors hover:cursor-pointer'>
 						<ShoppingBag className='h-5 w-5' />
 						<span>Añadir al carrito</span>
 					</button>
