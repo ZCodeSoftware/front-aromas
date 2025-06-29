@@ -72,11 +72,11 @@ const SearchBar = ({ onClose }: SearchOverlayProps) => {
 				className={`relative bg-transparent  flex flex-col max-h-[40vh] ${
 					isClosing ? 'animate-fade-out' : 'animate-fade-in'
 				}`}>
-				<div className='w-full shadow-md bg-nav_bg py-3 flex-shrink-0'>
+				<div className='w-full shadow-md bg-aromas_nav_bg py-3 flex-shrink-0'>
 					<div className='max-w-4xl mx-auto'>
 						<div className='relative px-2'>
 							<Search
-								className='absolute left-4 top-1/2 -translate-y-1/2 text-fucsia mx-2'
+								className='absolute left-4 top-1/2 -translate-y-1/2 text-aromas_fucsia mx-2'
 								size={20}
 							/>
 							<input
@@ -90,11 +90,11 @@ const SearchBar = ({ onClose }: SearchOverlayProps) => {
 									boxShadow: 'none',
 									borderColor: '#EB5480',
 								}}
-								className='w-full bg-white border shadow-md border-gray-300 rounded-full py-2 pl-12 pr-12 text-lg focus:outline-none focus:ring-2 focus:ring-fucsia'
+								className='w-full bg-white border shadow-md border-gray-300 rounded-full py-2 pl-12 pr-12 text-lg focus:outline-none focus:ring-2 focus:ring-aromas_fucsia'
 							/>
 							<button
 								onClick={handleClose}
-								className='absolute right-4 top-1/2 -translate-y-1/2 text-gray_text hover:text-gray-900 mx-2'>
+								className='absolute right-4 top-1/2 -translate-y-1/2 text-aromas_gray_text hover:text-gray-900 mx-2'>
 								<X size={24} />
 							</button>
 						</div>
@@ -106,7 +106,7 @@ const SearchBar = ({ onClose }: SearchOverlayProps) => {
 						<div className='max-w-4xl mx-auto'>
 							<div className='mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4'>
 								{isLoading && query && (
-									<p className='text-gray_text col-span-full text-center'>
+									<p className='text-aromas_gray_text col-span-full text-center'>
 										Buscando...
 									</p>
 								)}
@@ -114,7 +114,7 @@ const SearchBar = ({ onClose }: SearchOverlayProps) => {
 								{!isLoading &&
 									query &&
 									results.length === 0 && (
-										<p className='text-gray_text col-span-full text-center'>
+										<p className='text-aromas_gray_text col-span-full text-center'>
 											No se encontraron resultados para "
 											{query}".
 										</p>

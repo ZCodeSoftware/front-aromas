@@ -16,37 +16,37 @@ const Navbar = () => {
 					<SearchBar onClose={() => setIsSearchOpen(false)} />
 				</div>
 			) : (
-				<nav className='bg-nav_bg shadow-md py-4 px-8 flex justify-between items-center'>
+				<nav className='bg-aromas_nav_bg shadow-md py-4 px-8 flex justify-between items-center'>
 					<div className='flex justify-between items-center w-[30%]'>
-						<div className='text-xl font-bold text-fucsia'>
+						<div className='text-xl font-bold text-aromas_fucsia'>
 							Aromas y Armonía
 						</div>
 						<ul className='flex space-x-6'>
 							<li>
 								<a
 									href='/'
-									className='text-gray_text hover:text-gray-900'>
+									className='text-aromas_gray_text hover:text-gray-900'>
 									Inicio
 								</a>
 							</li>
 							<li>
 								<a
 									href='#'
-									className='text-gray_text hover:text-gray-900'>
+									className='text-aromas_gray_text hover:text-gray-900'>
 									Velas
 								</a>
 							</li>
 							<li>
 								<a
 									href='#'
-									className='text-gray_text hover:text-gray-900'>
+									className='text-aromas_gray_text hover:text-gray-900'>
 									Inciensos
 								</a>
 							</li>
 							<li>
 								<a
 									href='#'
-									className='text-gray_text hover:text-gray-900'>
+									className='text-aromas_gray_text hover:text-gray-900'>
 									Accesorios
 								</a>
 							</li>
@@ -57,21 +57,21 @@ const Navbar = () => {
 							<li>
 								<button
 									onClick={() => setIsSearchOpen(true)}
-									className='text-gray_text hover:text-gray-900'>
+									className='text-aromas_gray_text hover:text-gray-900'>
 									<Search />
 								</button>
 							</li>
 							<li>
 								<a
 									href='#'
-									className='text-gray_text hover:text-gray-900'>
+									className='text-aromas_gray_text hover:text-gray-900'>
 									<UserRound />
 								</a>
 							</li>
 							<li>
 								<a
 									href='#'
-									className='text-gray_text hover:text-gray-900'>
+									className='text-aromas_gray_text hover:text-gray-900'>
 									<ShoppingBag />
 								</a>
 							</li>

@@ -45,8 +45,8 @@ const FilterSection: React.FC<IFilterSectionProps> = ({
 						onClick={() => onToggle(value)}
 						className={`px-4 py-1.5 text-sm rounded-full border transition-colors duration-200 ${
 							selected.includes(value)
-								? 'bg-pink border-fucsia text-black'
-								: 'bg-white border-fucsia text-fucsia hover:bg-pink hover:text-black'
+								? 'bg-aromas_pink border-aromas_fucsia text-black'
+								: 'bg-white border-aromas_fucsia text-aromas_fucsia hover:bg-aromas_pink hover:text-black'
 						}`}>
 						{label}
 					</button>
@@ -177,7 +177,7 @@ export const ProductFilterModal: React.FC<IProductFilterModalProps> = ({
 						? 'animate-slide-out-to-right'
 						: 'animate-slide-in-from-right'
 				}`}>
-				<header className='flex items-center justify-between p-4 border-b-2 border-gray_line'>
+				<header className='flex items-center justify-between p-4 border-b-2 border-aromas_gray_line'>
 					<h2 className='text-xl font-bold text-gray-800'>
 						Filtrar Productos
 					</h2>
@@ -209,7 +209,7 @@ export const ProductFilterModal: React.FC<IProductFilterModalProps> = ({
 									boxShadow: 'none',
 									borderColor: '#EB5480',
 								}}
-								className='border-fucsia rounded-md text-start'
+								className='border-aromas_fucsia rounded-md text-start'
 							/>
 							<span className='text-gray-500'>-</span>
 							<Input
@@ -228,7 +228,7 @@ export const ProductFilterModal: React.FC<IProductFilterModalProps> = ({
 									boxShadow: 'none',
 									borderColor: '#EB5480',
 								}}
-								className='text-start border-fucsia rounded-md'
+								className='text-start border-aromas_fucsia rounded-md'
 							/>
 						</div>
 					</div>
@@ -272,8 +272,8 @@ export const ProductFilterModal: React.FC<IProductFilterModalProps> = ({
 								onClick={() => handleAvailabilityToggle(true)}
 								className={`px-4 py-1.5 text-sm rounded-full border transition-colors duration-200 ${
 									localFilters.hasStock === true
-										? 'bg-pink border-fucsia text-black'
-										: 'bg-white border-fucsia text-fucsia hover:bg-pink hover:text-black'
+										? 'bg-aromas_pink border-aromas_fucsia text-black'
+										: 'bg-white border-aromas_fucsia text-aromas_fucsia hover:bg-aromas_pink hover:text-black'
 								}`}>
 								En stock
 							</button>
@@ -281,24 +281,24 @@ export const ProductFilterModal: React.FC<IProductFilterModalProps> = ({
 								onClick={() => handleAvailabilityToggle(false)}
 								className={`px-4 py-1.5 text-sm rounded-full border transition-colors duration-200 ${
 									localFilters.hasStock === false
-										? 'bg-pink border-fucsia text-black'
-										: 'bg-white border-fucsia text-fucsia hover:bg-pink hover:text-black'
+										? 'bg-aromas_pink border-aromas_fucsia text-black'
+										: 'bg-white border-aromas_fucsia text-aromas_fucsia hover:bg-aromas_pink hover:text-black'
 								}`}>
 								Agotado
 							</button>
 						</div>
 					</div>
 				</main>
-				<footer className='p-4 border-t-2 border-gray_line space-y-3'>
+				<footer className='p-4 border-t-2 border-aromas_gray_line space-y-3'>
 					<Button
 						onClick={handleApply}
-						className='w-full bg-pink hover:bg-pink text-gray_text font-bold py-3 rounded-xl'>
+						className='w-full bg-aromas_pink hover:bg-aromas_pink text-aromas_gray_text font-bold py-3 rounded-xl'>
 						Aplicar filtros
 					</Button>
 					<Button
 						onClick={handleClear}
 						variant='outline'
-						className='w-full border-fucsia text-fucsia hover:bg-pink font-bold py-3 rounded-xl'>
+						className='w-full border-aromas_fucsia text-aromas_fucsia hover:bg-aromas_pink font-bold py-3 rounded-xl'>
 						Limpiar filtros
 					</Button>
 				</footer>

@@ -108,8 +108,8 @@ const ProductsContainer = () => {
 					</h1>
 					<Button
 						onClick={() => setIsFilterModalOpen(true)}
-						className='border border-gray-300 shadow-md rounded-xl hover:border-fucsia hover:cursor-pointer transition-colors flex items-center gap-2'>
-						<Filter className='h-5 w-5 text-fucsia' />
+						className='border border-gray-300 shadow-md rounded-xl hover:border-aromas_fucsia hover:cursor-pointer transition-colors flex items-center gap-2'>
+						<Filter className='h-5 w-5 text-aromas_fucsia' />
 						<span className='hidden sm:inline'>Filtrar</span>
 					</Button>
 				</div>
