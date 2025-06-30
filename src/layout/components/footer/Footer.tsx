@@ -13,17 +13,17 @@ const Footer = () => {
 							para transformar tu espacio y mejorar tu bienestar.
 						</p>
 						<ul className='flex space-x-4'>
-							<li className='rounded-full text-aromas_fucsia bg-aromas_icons_bg p-2 w-10 h-10 flex items-center justify-center mr-2'>
+							<li className='rounded-full text-aromas_fucsia bg-aromas_icons_bg p-2 w-10 h-10 flex items-center justify-center'>
 								<a href='#'>
 									<Instagram />
 								</a>
 							</li>
-							<li className='rounded-full text-aromas_fucsia bg-aromas_icons_bg p-2 w-10 h-10 flex items-center justify-center mr-2'>
+							<li className='rounded-full text-aromas_fucsia bg-aromas_icons_bg p-2 w-10 h-10 flex items-center justify-center'>
 								<a href='#'>
 									<Facebook />
 								</a>
 							</li>
-							<li className='rounded-full text-aromas_fucsia bg-aromas_icons_bg p-2 w-10 h-10 flex items-center justify-center mr-2'>
+							<li className='rounded-full text-aromas_fucsia bg-aromas_icons_bg p-2 w-10 h-10 flex items-center justify-center'>
 								<a href='#'>
 									<Twitter />
 								</a>
