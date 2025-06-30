@@ -4,9 +4,11 @@ import type { LayoutProps } from './models/layout-props.interface';
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
 	return (
-		<div className='layout'>
+		<div className='flex flex-col min-h-screen mb-12 md:mb-0'>
 			<Navbar />
-			<main className='content'>{children}</main>
+			<main className='flex-grow flex flex-col items-center justify-center'>
+				{children}
+			</main>
 			<Footer />
 		</div>
 	);

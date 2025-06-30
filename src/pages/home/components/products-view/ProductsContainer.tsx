@@ -27,6 +27,10 @@ const ProductsContainer = () => {
 		limit: 12,
 	});
 
+	if (typeof window !== 'undefined') {
+		document.body.style.overflow = isFilterModalOpen ? 'hidden' : 'auto';
+	}
+
 	const fetchProducts = async (currentFilters: Partial<IFilterOptions>) => {
 		setIsLoading(true);
 		try {
@@ -96,28 +100,28 @@ const ProductsContainer = () => {
 	};
 
 	return (
-		<div className='xl:w-4/5 flex flex-col items-center mx-auto p-6 shadow-none bg-white'>
+		<div className='xl:w-4/5 h-screen flex flex-col items-center mx-auto px-6 shadow-none bg-aromas_home_bg'>
 			<div className='w-full max-w-6xl'>
-				<div className='flex justify-between items-center w-full mb-6'>
-					<h1 className='text-2xl text-center font-bold'>
+				<div className='flex justify-between items-center w-full mb-6 '>
+					<h1 className='text-2xl text-center font-bold text-aromas_gray_text'>
 						Nuestros productos
 					</h1>
 					<Button
 						onClick={() => setIsFilterModalOpen(true)}
-						className='border border-gray-300 shadow-md rounded-xl hover:border-[#EB5480] hover:cursor-pointer transition-colors flex items-center gap-2'>
-						<Filter className='h-5 w-5 text-[#EB5480]' />
+						className='border border-gray-300 text-aromas_gray_text shadow-md rounded-xl hover:border-aromas_fucsia hover:cursor-pointer transition-colors flex items-center gap-2'>
+						<Filter className='h-5 w-5 text-aromas_fucsia' />
 						<span className='hidden sm:inline'>Filtrar</span>
 					</Button>
 				</div>
-				<div className='w-full'>
+				<div className='w-full md:block flex justify-center'>
 					{isLoading ? (
-						<div className='text-center py-10'>
+						<div className='text-center py-10 text-aromas_gray_text'>
 							Cargando productos...
 						</div>
 					) : products.data.length > 0 ? (
 						<ProductsList products={products.data} />
 					) : (
-						<div className='text-center py-10'>
+						<div className='text-center py-10 text-aromas_gray_text'>
 							No se encontraron productos.
 						</div>
 					)}

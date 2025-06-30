@@ -20,7 +20,16 @@ export default {
 		},
 		extend: {
 			colors: {
-				test: '#EB5480',
+				aromas_fucsia: '#EB5480',
+				aromas_pink: '#FFB1C8',
+				aromas_gray_text: '#373737',
+				aromas_icons_bg: '#E4E4E4',
+				aromas_nav_bg: '#F8F5FF',
+				aromas_gray_line: '#D7D7D7',
+				aromas_bg_gradient_1: '#D8B4FE',
+				aromas_bg_gradient_2: '#FCD5CE',
+				aromas_header_bg_gradient_1: '#FCD5CE',
+				aromas_home_bg: '#F8F5FF',
 			},
 			keyframes: {
 				'fade-in': {
