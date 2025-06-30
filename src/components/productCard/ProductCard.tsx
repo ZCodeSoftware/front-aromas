@@ -46,7 +46,7 @@ const ProductCard = ({ product }: IProductCardProps) => {
 
 	return (
 		<>
-			<Card className='w-full max-w-[320px] rounded-2xl overflow-hidden shadow-none bg-white border-none flex flex-col gap-4 py-0'>
+			<Card className='w-full max-w-[320px] rounded-2xl overflow-hidden shadow-none bg-aromas_home_bg border-none flex flex-col gap-4 py-0'>
 				<div className='relative'>
 					<div className='w-full aspect-[16/9] h-52'>
 						<img
@@ -55,7 +55,7 @@ const ProductCard = ({ product }: IProductCardProps) => {
 							className='object-cover w-full h-full rounded-lg'
 						/>
 					</div>
-					<button className='absolute top-3 right-3 bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors hover:cursor-pointer'>
+					<button className='absolute top-3 right-3 bg-aromas_home_bg p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors hover:cursor-pointer'>
 						<Heart
 							className='h-5 w-5 text-aromas_fucsia'
 							strokeWidth={1.5}
@@ -64,7 +64,7 @@ const ProductCard = ({ product }: IProductCardProps) => {
 				</div>
 				<CardContent className='px-2 flex-1 flex flex-col'>
 					<div className='flex justify-between items-start mb-2'>
-						<CardTitle className='text-lg font-bold text-gray-800'>
+						<CardTitle className='text-lg font-bold text-aromas_gray_text'>
 							{product.name}
 						</CardTitle>
 						<p className='text-lg font-bold text-aromas_fucsia whitespace-nowrap pl-4'>
@@ -75,14 +75,14 @@ const ProductCard = ({ product }: IProductCardProps) => {
 						ref={descriptionRef}
 						onMouseEnter={handleMouseEnter}
 						onMouseLeave={handleMouseLeave}
-						className={`text-gray-600 text-sm line-clamp-2 ${
+						className={`text-aromas_gray_text text-sm line-clamp-2 ${
 							isTextOverflowing ? 'cursor-help' : 'cursor-default'
 						}`}>
 						{product.description}
 					</CardDescription>
 				</CardContent>
 				<CardFooter className='py-2 px-0 pt-0 mt-auto'>
-					<button className='w-full bg-aromas_pink text-gray-900 font-bold py-2 px-4 rounded-3xl flex items-center justify-center gap-2 border border-transparent hover:border-aromas_fucsia transition-colors hover:cursor-pointer'>
+					<button className='w-full bg-aromas_pink text-aromas_gray_text font-bold py-2 px-4 rounded-3xl flex items-center justify-center gap-2 border border-transparent hover:border-aromas_fucsia transition-colors hover:cursor-pointer'>
 						<ShoppingBag className='h-5 w-5' />
 						<span>Añadir al carrito</span>
 					</button>

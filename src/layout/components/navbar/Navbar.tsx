@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, UserRound, ShoppingBag } from 'lucide-react';
+import { Search, UserRound, ShoppingBag, Menu } from 'lucide-react';
 import SearchBar from './components/searchBar/SearchBar';
 
 const Navbar = () => {
@@ -18,10 +18,10 @@ const Navbar = () => {
 			) : (
 				<nav className='bg-aromas_nav_bg shadow-md py-4 px-8 flex justify-between items-center'>
 					<div className='flex justify-between items-center w-[30%]'>
-						<div className='text-xl font-bold text-aromas_fucsia'>
+						<div className='text-xl text-center font-bold text-aromas_fucsia'>
 							Aromas y Armonía
 						</div>
-						<ul className='flex space-x-6'>
+						<ul className='hidden lg:flex space-x-6 text-center md:ml-6'>
 							<li>
 								<a
 									href='/'
@@ -74,6 +74,9 @@ const Navbar = () => {
 									className='text-aromas_gray_text hover:text-gray-900'>
 									<ShoppingBag />
 								</a>
+							</li>
+							<li className='flex lg:hidden'>
+								<Menu />
 							</li>
 						</ul>
 					</div>
