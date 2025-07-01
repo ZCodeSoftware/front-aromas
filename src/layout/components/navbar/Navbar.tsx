@@ -57,21 +57,21 @@ const Navbar = () => {
 							<li>
 								<button
 									onClick={() => setIsSearchOpen(true)}
-									className='text-aromas_gray_text hover:text-gray-900'>
+									className='flex text-aromas_gray_text hover:text-gray-900'>
 									<Search />
 								</button>
 							</li>
 							<li>
 								<a
 									href='#'
-									className='text-aromas_gray_text hover:text-gray-900'>
+									className='flex text-aromas_gray_text hover:text-gray-900'>
 									<UserRound />
 								</a>
 							</li>
 							<li>
 								<a
 									href='#'
-									className='text-aromas_gray_text hover:text-gray-900'>
+									className='flex text-aromas_gray_text hover:text-gray-900'>
 									<ShoppingBag />
 								</a>
 							</li>
