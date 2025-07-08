@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Search, UserRound, ShoppingBag, Menu } from 'lucide-react';
 import SearchBar from './components/searchBar/SearchBar';
+import Profile from '@/pages/profile/Profile';
 
 const Navbar = () => {
 	const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+	const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
 	if (typeof window !== 'undefined') {
-		document.body.style.overflow = isSearchOpen ? 'hidden' : 'auto';
+		document.body.style.overflow =
+			isSearchOpen || isProfileModalOpen ? 'hidden' : 'auto';
 	}
 
 	return (
@@ -62,11 +65,11 @@ const Navbar = () => {
 								</button>
 							</li>
 							<li>
-								<a
-									href='#'
+								<button
+									onClick={() => setIsProfileModalOpen(true)}
 									className='flex text-aromas_gray_text hover:text-gray-900'>
 									<UserRound />
-								</a>
+								</button>
 							</li>
 							<li>
 								<a
@@ -81,6 +84,9 @@ const Navbar = () => {
 						</ul>
 					</div>
 				</nav>
+			)}
+			{isProfileModalOpen && (
+				<Profile onClose={() => setIsProfileModalOpen(false)} />
 			)}
 		</header>
 	);
