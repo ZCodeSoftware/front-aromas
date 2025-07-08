@@ -30,6 +30,7 @@ export default {
 				aromas_bg_gradient_2: '#FCD5CE',
 				aromas_header_bg_gradient_1: '#FCD5CE',
 				aromas_home_bg: '#F8F5FF',
+				aromas_success: '#166534',
 			},
 			keyframes: {
 				'fade-in': {
@@ -48,6 +49,14 @@ export default {
 					'0%': { transform: 'translateX(0)' },
 					'100%': { transform: 'translateX(100%)' },
 				},
+				'slide-in-from-left': {
+					'0%': { transform: 'translateX(-100%)', opacity: '0' },
+					'100%': { transform: 'translateX(0)', opacity: '1' },
+				},
+				'slide-out-to-left': {
+					'0%': { transform: 'translateX(0)', opacity: '1' },
+					'100%': { transform: 'translateX(-100%)', opacity: '0' },
+				},
 			},
 			animation: {
 				'fade-in': 'fade-in 0.3s ease-out forwards',
@@ -56,6 +65,9 @@ export default {
 					'slide-in-from-right 0.3s ease-out forwards',
 				'slide-out-to-right':
 					'slide-out-to-right 0.3s ease-out forwards',
+				'slide-in-from-left':
+					'slide-in-from-left 0.3s ease-out forwards',
+				'slide-out-to-left': 'slide-out-to-left 0.3s ease-out forwards',
 			},
 		},
 	},
