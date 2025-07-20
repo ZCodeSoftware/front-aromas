@@ -1,12 +1,16 @@
 import { useState, useRef } from 'react';
 import { ArrowLeft, X } from 'lucide-react';
 import { useClickOutside } from '@/hooks/useClickOutside';
+
 import ProfileHome from './components/Profile-Home';
 import ProfileOrders from './components/Profile-Orders';
-import type { IProfileProps } from './models/profile-props.interface';
-import type { IProfileView } from './types/profile-view';
 import ProfileConfig from './components/Profile-Config';
-import ProfileLocations from './components/profile-locations/Profile-Locations';
+import ProfileLocationsView from './components/profile-locations/components/Profile-Locations-View';
+import ProfileCreateLocation from './components/profile-locations/components/Profile-Create-Location';
+import ProfileUpdateLocation from './components/profile-locations/components/Profile-Update-Location';
+
+import type { IProfileView } from './types/profile-view';
+import type { IProfileProps } from './models/profile-props.interface';
 
 const Profile: React.FC<IProfileProps> = ({ onClose }) => {
 	const [isClosing, setIsClosing] = useState(false);
@@ -16,45 +20,49 @@ const Profile: React.FC<IProfileProps> = ({ onClose }) => {
 
 	const handleClose = () => {
 		setIsClosing(true);
-
-		setTimeout(() => {
-			onClose();
-			setIsClosing(false);
-		}, 200);
+		setTimeout(() => onClose(), 200);
 	};
 
 	useClickOutside(modalRef, handleClose);
 
 	const navigateTo = (view: IProfileView) => {
 		if (view === currentView) return;
-
 		setExitingView(currentView);
 		setCurrentView(view);
+		setTimeout(() => setExitingView(null), 300);
+	};
 
-		setTimeout(() => {
-			setExitingView(null);
-		}, 300);
+	const getAnimationClass = (isExiting: boolean) => {
+		const isMovingToSubView =
+			['addressCreate', 'addressUpdate'].includes(currentView) &&
+			exitingView === 'addresses';
+		const isMovingFromSubView =
+			currentView === 'addresses' &&
+			['addressCreate', 'addressUpdate'].includes(exitingView!);
+		const isMovingToMainView =
+			currentView !== 'home' &&
+			exitingView === 'home' &&
+			!isMovingFromSubView;
+		const isMovingToHome =
+			currentView === 'home' &&
+			exitingView !== 'home' &&
+			!isMovingToSubView;
+
+		const isNavigatingForward = isMovingToMainView || isMovingToSubView;
+		const isNavigatingBackward = isMovingToHome || isMovingFromSubView;
+
+		if (isExiting) {
+			return isNavigatingForward
+				? 'animate-slide-out-to-left'
+				: 'animate-slide-out-to-right';
+		}
+		if (isNavigatingForward) return 'animate-slide-in-from-right';
+		if (isNavigatingBackward) return 'animate-slide-in-from-left';
+		return '';
 	};
 
 	const renderView = (view: IProfileView, isExiting: boolean) => {
-		const isNavigatingForward =
-			currentView !== 'home' && (exitingView === 'home' || !exitingView);
-		const isNavigatingBackward =
-			currentView === 'home' && exitingView !== 'home';
-
-		let animationClass = '';
-		if (isExiting) {
-			animationClass = isNavigatingForward
-				? 'animate-slide-out-to-left'
-				: 'animate-slide-out-to-right';
-		} else {
-			animationClass = isNavigatingForward
-				? 'animate-slide-in-from-right'
-				: isNavigatingBackward
-				? 'animate-slide-in-from-left'
-				: '';
-		}
-
+		const animationClass = getAnimationClass(isExiting);
 		const componentToRender = () => {
 			switch (view) {
 				case 'orders':
@@ -62,12 +70,15 @@ const Profile: React.FC<IProfileProps> = ({ onClose }) => {
 				case 'settings':
 					return <ProfileConfig />;
 				case 'addresses':
-					return <ProfileLocations />;
+					return <ProfileLocationsView onNavigate={navigateTo} />;
+				case 'addressCreate':
+					return <ProfileCreateLocation onNavigate={navigateTo} />;
+				case 'addressUpdate':
+					return <ProfileUpdateLocation onNavigate={navigateTo} />;
 				default:
 					return <ProfileHome onNavigate={navigateTo} />;
 			}
 		};
-
 		return (
 			<div
 				className={`absolute w-full h-full bg-white overflow-y-auto ${animationClass}`}>
@@ -79,68 +90,24 @@ const Profile: React.FC<IProfileProps> = ({ onClose }) => {
 	const getTitle = () => {
 		switch (currentView) {
 			case 'orders':
-				return (
-					<h2 className='font-semibold text-aromas_gray_text'>
-						Mis Pedidos
-					</h2>
-				);
+				return 'Mis Pedidos';
 			case 'addresses':
-				return (
-					<h2 className='font-semibold text-aromas_gray_text'>
-						Mis Direcciones
-					</h2>
-				);
+				return 'Mis Direcciones';
 			case 'settings':
-				return (
-					<h2 className='font-semibold text-aromas_gray_text'>
-						Configuración
-					</h2>
-				);
+				return 'Configuración';
+			case 'addressCreate':
+				return 'Nueva Dirección';
+			case 'addressUpdate':
+				return 'Editar Dirección';
 			default:
-				return (
-					<h2 className='font-semibold text-aromas_gray_text'>
-						Mi Perfil
-					</h2>
-				);
+				return 'Mi Perfil';
 		}
 	};
 
-	const renderHeaderContent = (view: IProfileView, isExiting: boolean) => {
-		const animationClass = isExiting
-			? 'animate-fade-out'
-			: 'animate-fade-in';
-		const content =
-			view !== 'home' ? (
-				<div className='flex flex-col gap-y-2'>
-					<div className='flex items-center gap-x-1'>
-						<ArrowLeft className='h-4 w-4 text-aromas_fucsia' />
-						<button
-							onClick={() => navigateTo('home')}
-							className='text-aromas_fucsia'>
-							volver
-						</button>
-					</div>
-					{getTitle()}
-				</div>
-			) : (
-				<div className='flex items-center gap-4 py-2 w-full'>
-					<span>Imagen</span>
-					<div className='flex flex-col'>
-						<h2 className='text-aromas_gray_text'>
-							Nombre de Usuario
-						</h2>
-						<h3 className='text-aromas_gray_text'>
-							Email de Usuario
-						</h3>
-					</div>
-				</div>
-			);
-		return (
-			<div
-				className={`absolute w-full h-full flex items-center ${animationClass}`}>
-				{content}
-			</div>
-		);
+	const getBackDestination = (): IProfileView => {
+		return ['addressCreate', 'addressUpdate'].includes(currentView)
+			? 'addresses'
+			: 'home';
 	};
 
 	return (
@@ -155,29 +122,52 @@ const Profile: React.FC<IProfileProps> = ({ onClose }) => {
 						? 'animate-slide-out-to-right'
 						: 'animate-slide-in-from-right'
 				}`}>
-				<header className='flex items-center justify-between p-4'>
-					<div className='flex items-center gap-4'>
-						<h2 className='text-xl font-bold text-aromas_gray_text'>
-							Mi Perfil
-						</h2>
+				<header className='flex items-center justify-between px-4 flex-col'>
+					<div className='flex items-center justify-between w-full py-4 border-b-2 border-aromas_gray_line'>
+						<div className='flex items-center gap-4'>
+							<h2 className='text-xl font-bold text-aromas_gray_text'>
+								Mi Perfil
+							</h2>
+						</div>
+						<button
+							onClick={handleClose}
+							className='p-1 rounded-full hover:bg-gray-200 self-start'>
+							<X className='h-6 w-6 text-aromas_gray_text' />
+						</button>
 					</div>
-					<button
-						onClick={handleClose}
-						className='p-1 rounded-full hover:bg-gray-200'>
-						<X className='h-6 w-6 text-aromas_gray_text' />
-					</button>
+					<div className='w-full py-4 flex items-center justify-between'>
+						{currentView === 'home' ? (
+							<div className='flex items-center gap-4 w-full'>
+								<span>Imagen</span>
+								<div className='flex flex-col'>
+									<h2 className='text-aromas_gray_text'>
+										Nombre de Usuario
+									</h2>
+									<h3 className='text-sm text-gray-500'>
+										Email de Usuario
+									</h3>
+								</div>
+							</div>
+						) : (
+							<div className='flex justify-start flex-col pb-4 gap-y-1 border-b-2 border-aromas_gray_line w-full'>
+								<button
+									onClick={() =>
+										navigateTo(getBackDestination())
+									}
+									className='flex items-center gap-x-1 text-aromas_fucsia'>
+									<ArrowLeft className='h-4 w-4' />
+									<span>volver</span>
+								</button>
+								<h2 className='text-xl font-bold text-aromas_gray_text'>
+									{getTitle()}
+								</h2>
+							</div>
+						)}
+					</div>
 				</header>
-				<div
-					className={`relative flex flex-col justify-center border-t-2 ${
-						currentView != 'home' && 'border-b-2'
-					} border-aromas_gray_line py-4 px-6 mb-2 h-28`}>
-					{renderHeaderContent(currentView, false)}
 
-					{exitingView && renderHeaderContent(exitingView, true)}
-				</div>
 				<div className='relative flex-1'>
 					{renderView(currentView, false)}
-
 					{exitingView && renderView(exitingView, true)}
 				</div>
 			</div>

@@ -1,1 +1,7 @@
-export type IProfileView = 'home' | 'orders' | 'addresses' | 'settings';
+export type IProfileView =
+	| 'home'
+	| 'orders'
+	| 'settings'
+	| 'addresses'
+	| 'addressCreate'
+	| 'addressUpdate';

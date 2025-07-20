@@ -7,7 +7,6 @@ import {
 	CardTitle,
 } from '@/components/ui/card';
 import { useState, useRef, useEffect } from 'react';
-import productImage from '../../mocks/products/product-image/dd0ae5f22f356d984fc7741ecaf2df9dcda764a3.png';
 import type { IProductCardProps } from './models/product-card.interface';
 
 const ProductCard = ({ product }: IProductCardProps) => {
@@ -50,7 +49,7 @@ const ProductCard = ({ product }: IProductCardProps) => {
 				<div className='relative'>
 					<div className='w-full aspect-[16/9] h-64'>
 						<img
-							src={productImage}
+							src={product.images[0]}
 							alt={product.name}
 							className='object-cover w-full h-full rounded-lg'
 						/>
