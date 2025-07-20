@@ -1,5 +1,5 @@
-import type { IProfileLocationsView } from '../types/locations-view';
+import type { IProfileView } from '@/pages/profile/types/profile-view';
 
 export interface IProfileLocationsSubpagesProps {
-	onNavigate: (view: IProfileLocationsView) => void;
+	onNavigate: (view: IProfileView) => void;
 }
