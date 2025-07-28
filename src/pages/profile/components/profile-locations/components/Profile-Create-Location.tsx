@@ -26,10 +26,7 @@ const ProfileCreateLocation: React.FC<IProfileLocationsSubpagesProps> = ({
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
 	) => {
 		const { name, value } = e.target;
-		setFormData((prevFormData) => ({
-			...prevFormData,
-			[name]: value,
-		}));
+		setFormData((prev) => ({ ...prev, [name]: value }));
 	};
 
 	const handleSaveLocation = async () => {
@@ -37,38 +34,22 @@ const ProfileCreateLocation: React.FC<IProfileLocationsSubpagesProps> = ({
 			alert('Por favor, selecciona una ubicación en el mapa primero.');
 			return;
 		}
-
-		try {
-			const data = {
-				name: formData.name,
-				street: formData.street,
-				floor_address: formData.floor_address,
-				number: formData.number,
-				zip_code: formData.zip_code,
-				description: '',
-				address: {
-					lat: selectedPosition.lat,
-					lng: selectedPosition.lng,
-				},
-			};
-			console.log(data);
-		} catch (error) {
-			console.error('Hubo un error:', error);
-		}
+		console.log({
+			...formData,
+			address: { lat: selectedPosition.lat, lng: selectedPosition.lng },
+		});
+		onNavigate('addresses');
 	};
 
 	return (
-		<div className='flex flex-col w-full justify-center items-center px-6 pb-6 max-h-screen overflow-y-aut'>
-			<div className='flex py-6 flex-col w-full gap-y-6 max-h-screen o'>
+		<div className='flex flex-col w-full px-6 pb-6'>
+			<div className='flex py-6 flex-col w-full gap-y-6'>
 				<div>
 					<label className='text-sm text-aromas_gray_text'>
 						Nombre
 					</label>
 					<Input
-						style={{
-							outline: 'none',
-							boxShadow: 'none',
-						}}
+						style={{ outline: 'none', boxShadow: 'none' }}
 						name='name'
 						value={formData.name}
 						onChange={handleInputChange}
@@ -80,10 +61,7 @@ const ProfileCreateLocation: React.FC<IProfileLocationsSubpagesProps> = ({
 							Calle
 						</label>
 						<Input
-							style={{
-								outline: 'none',
-								boxShadow: 'none',
-							}}
+							style={{ outline: 'none', boxShadow: 'none' }}
 							name='street'
 							value={formData.street}
 							onChange={handleInputChange}
@@ -94,10 +72,7 @@ const ProfileCreateLocation: React.FC<IProfileLocationsSubpagesProps> = ({
 							Número
 						</label>
 						<Input
-							style={{
-								outline: 'none',
-								boxShadow: 'none',
-							}}
+							style={{ outline: 'none', boxShadow: 'none' }}
 							name='number'
 							value={formData.number}
 							onChange={handleInputChange}
@@ -106,15 +81,12 @@ const ProfileCreateLocation: React.FC<IProfileLocationsSubpagesProps> = ({
 				</div>
 				<div>
 					<label className='text-sm text-aromas_gray_text'>
-						Pisto / Departamento
+						Piso / Departamento
 					</label>
 					<Input
-						style={{
-							outline: 'none',
-							boxShadow: 'none',
-						}}
+						style={{ outline: 'none', boxShadow: 'none' }}
 						name='floor_address'
-						value={formData.floor_address || '-'}
+						value={formData.floor_address}
 						onChange={handleInputChange}
 					/>
 				</div>
@@ -123,24 +95,18 @@ const ProfileCreateLocation: React.FC<IProfileLocationsSubpagesProps> = ({
 						Código postal
 					</label>
 					<Input
-						style={{
-							outline: 'none',
-							boxShadow: 'none',
-						}}
+						style={{ outline: 'none', boxShadow: 'none' }}
 						name='zip_code'
 						value={formData.zip_code}
 						onChange={handleInputChange}
 					/>
 				</div>
-				<div className='flex flex-col'>
+				<div>
 					<label className='text-sm text-aromas_gray_text'>
 						Descripción
 					</label>
 					<Textarea
-						style={{
-							outline: 'none',
-							boxShadow: 'none',
-						}}
+						style={{ outline: 'none', boxShadow: 'none' }}
 						name='description'
 						value={formData.description}
 						onChange={handleInputChange}
@@ -155,14 +121,15 @@ const ProfileCreateLocation: React.FC<IProfileLocationsSubpagesProps> = ({
 			</div>
 			<div className='flex justify-center gap-x-4'>
 				<Button
-					onClick={() => onNavigate('locations')}
-					className='border border-aromas_fucsia p-4 text-aromas_fucsia rounded-3xl'>
+					onClick={() => onNavigate('addresses')}
+					variant='outline'
+					className='border-aromas_fucsia text-aromas_fucsia rounded-3xl'>
 					Cancelar
 				</Button>
 				<Button
 					onClick={handleSaveLocation}
 					className='bg-aromas_pink px-6 rounded-3xl text-aromas_gray_text'>
-					<Save /> Guardar cambios
+					<Save className='mr-2' /> Guardar
 				</Button>
 			</div>
 		</div>

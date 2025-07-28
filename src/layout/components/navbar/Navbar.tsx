@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { Search, UserRound, ShoppingBag, Menu } from 'lucide-react';
+import {
+	Search,
+	UserRound,
+	ShoppingBag,
+	Menu,
+	// Settings
+} from 'lucide-react';
 import SearchBar from './components/searchBar/SearchBar';
 import Profile from '@/pages/profile/Profile';
 
@@ -57,6 +63,13 @@ const Navbar = () => {
 					</div>
 					<div>
 						<ul className='flex space-x-6 items-center'>
+							{/* <li>
+								<a
+									href='/dashboard'
+									className='flex text-aromas_gray_text hover:text-gray-900'>
+									<Settings />
+								</a>
+							</li> */}
 							<li>
 								<button
 									onClick={() => setIsSearchOpen(true)}
