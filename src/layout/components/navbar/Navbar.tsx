@@ -8,10 +8,20 @@ import {
 } from 'lucide-react';
 import SearchBar from './components/searchBar/SearchBar';
 import Profile from '@/pages/profile/Profile';
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { useAuthStore } from '@/stores/auth.store';
+import { useModalStore } from '@/stores/modal.store';
 
 const Navbar = () => {
 	const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
 	const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+	const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+	const openModal = useModalStore((state) => state.open);
 
 	if (typeof window !== 'undefined') {
 		document.body.style.overflow =
@@ -78,11 +88,42 @@ const Navbar = () => {
 								</button>
 							</li>
 							<li>
-								<button
-									onClick={() => setIsProfileModalOpen(true)}
-									className='flex text-aromas_gray_text hover:text-gray-900'>
-									<UserRound />
-								</button>
+								{isAuthenticated ? (
+									<button
+										onClick={() =>
+											setIsProfileModalOpen(true)
+										}
+										className='flex text-aromas_gray_text hover:text-gray-900'>
+										<UserRound />
+									</button>
+								) : (
+									<Popover>
+										<PopoverTrigger asChild>
+											<button className='flex text-aromas_gray_text hover:text-gray-900'>
+												<UserRound />
+											</button>
+										</PopoverTrigger>
+										<PopoverContent
+											align='end'
+											className='flex w-48 flex-col gap-2 p-3 bg-aromas_nav_bg'>
+											<Button
+												variant='outline'
+												className='rounded-full border-aromas_pink text-aromas_gray_text hover:bg-aromas_pink/10'
+												onClick={() =>
+													openModal('login')
+												}>
+												Iniciar sesión
+											</Button>
+											<Button
+												className='rounded-full bg-aromas_pink text-aromas_gray_text hover:bg-aromas_pink/80'
+												onClick={() =>
+													openModal('signup')
+												}>
+												Registrarse
+											</Button>
+										</PopoverContent>
+									</Popover>
+								)}
 							</li>
 							<li>
 								<a

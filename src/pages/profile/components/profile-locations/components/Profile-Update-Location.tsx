@@ -1,17 +1,40 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 import { Save } from 'lucide-react';
 import type { IProfileLocationsSubpagesProps } from '../models/profile-locations-subpages-props.interface';
 import MapSelector from '@/components/map/MapSelector';
 import { LatLng } from 'leaflet';
 import { Textarea } from '@/components/ui/textarea';
+import type { IAddress } from '@/services/address/models/address.interface';
+import { addressGetService } from '@/services/address/GET/address.service.get';
+import { addressPutService } from '@/services/address/PUT/address.service.put';
+import { getApiErrorMessage } from '@/services/auth/utils/get-api-error-message';
+import { typeHousingGetService } from '@/services/catalogs/type-housing/GET/type-housing.service.get';
+import type { ITypeHousing } from '@/services/catalogs/type-housing/models/type-housing.interface';
 
-const ProfileUpdateLocation: React.FC<IProfileLocationsSubpagesProps> = ({
+const NO_TYPE_HOUSING = 'none';
+
+interface ProfileUpdateLocationProps extends IProfileLocationsSubpagesProps {
+	address: IAddress | undefined;
+	onUpdated: () => void;
+}
+
+const ProfileUpdateLocation: React.FC<ProfileUpdateLocationProps> = ({
 	onNavigate,
+	address,
+	onUpdated,
 }) => {
 	const [selectedPosition, setSelectedPosition] = useState<LatLng | null>(
-		null
+		null,
 	);
 	const [formData, setFormData] = useState({
 		name: '',
@@ -20,40 +43,124 @@ const ProfileUpdateLocation: React.FC<IProfileLocationsSubpagesProps> = ({
 		number: '',
 		zip_code: '',
 		description: '',
+		type_of_housing: NO_TYPE_HOUSING,
 	});
+	const [typeHousings, setTypeHousings] = useState<ITypeHousing[]>([]);
+	const [saving, setSaving] = useState(false);
 
 	useEffect(() => {
-		const lat = -34.58507382300608;
-		const lng = -58.47457587718964;
-		setSelectedPosition(new LatLng(lat, lng));
-		setFormData({
-			name: 'Casa',
-			street: 'Falsa',
-			floor_address: '3b',
-			number: '123',
-			zip_code: '1438',
-			description: 'Datos existentes',
-		});
+		typeHousingGetService
+			.getTypeHousings()
+			.then(setTypeHousings)
+			.catch(() => setTypeHousings([]));
 	}, []);
 
+	useEffect(() => {
+		if (!address) return;
+
+		setFormData({
+			name: address.name ?? '',
+			street: address.street,
+			floor_address: address.floorAddress ?? '',
+			number: address.number !== undefined ? String(address.number) : '',
+			zip_code: address.zipCode,
+			description: address.description ?? '',
+			type_of_housing: address.typeOfHousing?._id ?? NO_TYPE_HOUSING,
+		});
+
+		let cancelled = false;
+		addressGetService
+			.getAddressById(address._id)
+			.then((fullAddress) => {
+				if (cancelled) return;
+				setSelectedPosition(
+					fullAddress.geo
+						? new LatLng(
+								Number(fullAddress.geo.lat),
+								Number(fullAddress.geo.lng),
+							)
+						: null,
+				);
+				setFormData((prev) => ({
+					...prev,
+					type_of_housing:
+						fullAddress.typeOfHousing?._id ?? NO_TYPE_HOUSING,
+				}));
+			})
+			.catch(() => {
+				if (!cancelled) setSelectedPosition(null);
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [address]);
+
 	const handleInputChange = (
-		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
 	) => {
 		const { name, value } = e.target;
 		setFormData((prev) => ({ ...prev, [name]: value }));
 	};
 
 	const handleSaveLocation = async () => {
-		if (!selectedPosition) {
-			alert('Por favor, selecciona una ubicación en el mapa.');
+		if (!address) return;
+
+		if (!formData.street || !formData.zip_code) {
+			toast.error('Completa al menos la calle y el código postal.');
 			return;
 		}
-		console.log({
-			...formData,
-			address: { lat: selectedPosition.lat, lng: selectedPosition.lng },
-		});
-		onNavigate('addresses');
+
+		setSaving(true);
+		try {
+			await addressPutService.updateAddress(address._id, {
+				name: formData.name || undefined,
+				street: formData.street,
+				number: formData.number ? Number(formData.number) : undefined,
+				zipCode: formData.zip_code,
+				description: formData.description || undefined,
+				floorAddress: formData.floor_address || undefined,
+				isActive: true,
+				typeOfHousing:
+					formData.type_of_housing !== NO_TYPE_HOUSING
+						? formData.type_of_housing
+						: undefined,
+				geo: selectedPosition
+					? {
+							lat: selectedPosition.lat.toString(),
+							lng: selectedPosition.lng.toString(),
+						}
+					: undefined,
+			});
+			toast.success('Dirección actualizada con éxito.');
+			onUpdated();
+			onNavigate('addresses');
+		} catch (error) {
+			toast.error(
+				getApiErrorMessage(
+					error,
+					'No se pudo actualizar la dirección.',
+				),
+			);
+		} finally {
+			setSaving(false);
+		}
 	};
+
+	if (!address) {
+		return (
+			<div className='flex flex-col items-center gap-y-3 px-6 py-10'>
+				<p className='text-center text-sm text-red-600'>
+					No pudimos encontrar esa dirección.
+				</p>
+				<button
+					onClick={() => onNavigate('addresses')}
+					className='text-sm font-semibold text-aromas_fucsia underline underline-offset-2'>
+					Volver a mis direcciones
+				</button>
+			</div>
+		);
+	}
 
 	return (
 		<div className='flex flex-col w-full px-6 pb-6'>
@@ -68,6 +175,35 @@ const ProfileUpdateLocation: React.FC<IProfileLocationsSubpagesProps> = ({
 						value={formData.name}
 						onChange={handleInputChange}
 					/>
+				</div>
+				<div>
+					<label className='text-sm text-aromas_gray_text'>
+						Tipo de vivienda
+					</label>
+					<Select
+						value={formData.type_of_housing}
+						onValueChange={(value) =>
+							setFormData((prev) => ({
+								...prev,
+								type_of_housing: value,
+							}))
+						}>
+						<SelectTrigger className='w-full'>
+							<SelectValue placeholder='Seleccioná un tipo' />
+						</SelectTrigger>
+						<SelectContent className='bg-white'>
+							<SelectItem value={NO_TYPE_HOUSING}>
+								Sin especificar
+							</SelectItem>
+							{typeHousings.map((typeHousing) => (
+								<SelectItem
+									key={typeHousing._id}
+									value={typeHousing._id}>
+									{typeHousing.name}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 				</div>
 				<div className='flex gap-x-2'>
 					<div className='w-4/5'>
@@ -142,8 +278,10 @@ const ProfileUpdateLocation: React.FC<IProfileLocationsSubpagesProps> = ({
 				</Button>
 				<Button
 					onClick={handleSaveLocation}
+					disabled={saving}
 					className='bg-aromas_pink px-6 rounded-3xl text-aromas_gray_text'>
-					<Save className='mr-2' /> Guardar cambios
+					<Save className='mr-2' />{' '}
+					{saving ? 'Guardando...' : 'Guardar cambios'}
 				</Button>
 			</div>
 		</div>
