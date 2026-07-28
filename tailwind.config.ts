@@ -33,6 +33,26 @@ export default {
 				aromas_success: '#166534',
 			},
 			keyframes: {
+				'scale-in': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(8px) scale(.95)',
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0) scale(1)',
+					},
+				},
+				'scale-out': {
+					'0%': {
+						opacity: '1',
+						transform: 'translateY(0) scale(1)',
+					},
+					'100%': {
+						opacity: '0',
+						transform: 'translateY(8px) scale(.95)',
+					},
+				},
 				'fade-in': {
 					'0%': { opacity: '0' },
 					'100%': { opacity: '1' },
@@ -59,6 +79,8 @@ export default {
 				},
 			},
 			animation: {
+				'scale-in': 'scale-in .25s ease-out forwards',
+				'scale-out': 'scale-out .2s ease-in forwards',
 				'fade-in': 'fade-in 0.3s ease-out forwards',
 				'fade-out': 'fade-out 0.3s ease-out forwards',
 				'slide-in-from-right':

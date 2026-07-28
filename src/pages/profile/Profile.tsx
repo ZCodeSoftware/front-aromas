@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, X } from 'lucide-react';
 import { useClickOutside } from '@/hooks/useClickOutside';
 
@@ -8,6 +8,8 @@ import ProfileConfig from './components/Profile-Config';
 import ProfileLocationsView from './components/profile-locations/components/Profile-Locations-View';
 import ProfileCreateLocation from './components/profile-locations/components/Profile-Create-Location';
 import ProfileUpdateLocation from './components/profile-locations/components/Profile-Update-Location';
+import { userGetService } from '@/services/user/GET/user.service.get';
+import type { IUserProfile } from '@/services/user/models/user.interface';
 
 import type { IProfileView } from './types/profile-view';
 import type { IProfileProps } from './models/profile-props.interface';
@@ -16,7 +18,31 @@ const Profile: React.FC<IProfileProps> = ({ onClose }) => {
 	const [isClosing, setIsClosing] = useState(false);
 	const [currentView, setCurrentView] = useState<IProfileView>('home');
 	const [exitingView, setExitingView] = useState<IProfileView | null>(null);
+	const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
+		null
+	);
 	const modalRef = useRef<HTMLDivElement>(null);
+
+	const [profile, setProfile] = useState<IUserProfile | null>(null);
+	const [profileLoading, setProfileLoading] = useState(true);
+	const [profileError, setProfileError] = useState(false);
+
+	const fetchProfile = async () => {
+		setProfileLoading(true);
+		setProfileError(false);
+		try {
+			const data = await userGetService.getMyProfile();
+			setProfile(data);
+		} catch {
+			setProfileError(true);
+		} finally {
+			setProfileLoading(false);
+		}
+	};
+
+	useEffect(() => {
+		fetchProfile();
+	}, []);
 
 	const handleClose = () => {
 		setIsClosing(true);
@@ -25,7 +51,8 @@ const Profile: React.FC<IProfileProps> = ({ onClose }) => {
 
 	useClickOutside(modalRef, handleClose);
 
-	const navigateTo = (view: IProfileView) => {
+	const navigateTo = (view: IProfileView, addressId?: string) => {
+		setSelectedAddressId(addressId ?? null);
 		if (view === currentView) return;
 		setExitingView(currentView);
 		setCurrentView(view);
@@ -68,15 +95,51 @@ const Profile: React.FC<IProfileProps> = ({ onClose }) => {
 				case 'orders':
 					return <ProfileOrders />;
 				case 'settings':
-					return <ProfileConfig />;
+					return (
+						<ProfileConfig
+							profile={profile}
+							loading={profileLoading}
+							error={profileError}
+							onUpdated={fetchProfile}
+						/>
+					);
 				case 'addresses':
-					return <ProfileLocationsView onNavigate={navigateTo} />;
+					return (
+						<ProfileLocationsView
+							onNavigate={navigateTo}
+							addresses={profile?.address ?? []}
+							loading={profileLoading}
+							error={profileError}
+							onRetry={fetchProfile}
+							onDeleted={fetchProfile}
+						/>
+					);
 				case 'addressCreate':
-					return <ProfileCreateLocation onNavigate={navigateTo} />;
+					return (
+						<ProfileCreateLocation
+							onNavigate={navigateTo}
+							onCreated={fetchProfile}
+						/>
+					);
 				case 'addressUpdate':
-					return <ProfileUpdateLocation onNavigate={navigateTo} />;
+					return (
+						<ProfileUpdateLocation
+							onNavigate={navigateTo}
+							address={profile?.address.find(
+								(addr) => addr._id === selectedAddressId
+							)}
+							onUpdated={fetchProfile}
+						/>
+					);
 				default:
-					return <ProfileHome onNavigate={navigateTo} />;
+					return (
+						<ProfileHome
+							onNavigate={navigateTo}
+							setIsClosing={setIsClosing}
+							onClose={onClose}
+							profile={profile}
+						/>
+					);
 			}
 		};
 		return (
@@ -141,10 +204,16 @@ const Profile: React.FC<IProfileProps> = ({ onClose }) => {
 								<span>Imagen</span>
 								<div className='flex flex-col'>
 									<h2 className='text-aromas_gray_text'>
-										Nombre de Usuario
+										{profileLoading
+											? 'Cargando...'
+											: profile?.firstName ||
+												profile?.email ||
+												'Usuario'}
 									</h2>
 									<h3 className='text-sm text-gray-500'>
-										Email de Usuario
+										{profileLoading
+											? ''
+											: (profile?.email ?? '')}
 									</h3>
 								</div>
 							</div>

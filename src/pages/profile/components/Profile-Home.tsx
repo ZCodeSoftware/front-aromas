@@ -1,9 +1,31 @@
-import { LogOut, MapPin, Settings, ShoppingBag } from 'lucide-react';
+import { LayoutDashboard, LogOut, MapPin, Settings, ShoppingBag } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import type { IProfileSubpagesProps } from '../models/profile-subpages-props.interface';
+import type { IUserProfile } from '@/services/user/models/user.interface';
+import { useAuthStore } from '@/stores/auth.store';
+import { toast } from 'sonner';
+import { DASHBOARD_ROUTE } from '@/config/routes';
 
-export const ProfileHome: React.FC<IProfileSubpagesProps> = ({
+interface ProfileHomeProps extends IProfileSubpagesProps {
+	profile: IUserProfile | null;
+}
+
+export const ProfileHome: React.FC<ProfileHomeProps> = ({
 	onNavigate,
+	setIsClosing,
+	onClose,
+	profile,
 }) => {
+	const navigate = useNavigate();
+	const logout = useAuthStore((state) => state.logout);
+	const isAdmin = profile?.roles.some((role) => role.name === 'ADMIN');
+	const handleLogout = () => {
+		logout();
+		toast.success('Hasta luego. ¡Te esperamos pronto!');
+		if (setIsClosing) setIsClosing(true);
+		if (onClose) setTimeout(() => onClose(), 200);
+	};
+
 	return (
 		<main className='flex-1 p-6 overflow-y-auto'>
 			<div className='mb-6'>
@@ -35,12 +57,24 @@ export const ProfileHome: React.FC<IProfileSubpagesProps> = ({
 						</li>
 						<li className='flex gap-x-4'>
 							<LogOut className='text-aromas_fucsia' />
-							<button className='text-aromas_gray_text hover:underline'>
+							<button
+								onClick={handleLogout}
+								className='text-aromas_gray_text hover:underline'>
 								Cerrar Sesión
 							</button>
 						</li>
 					</ul>
 				</div>
+				{isAdmin && (
+					<div className='mt-10 pt-6 flex gap-x-4 border-t border-aromas_gray_line'>
+						<LayoutDashboard className='text-aromas_fucsia' />
+						<button
+							onClick={() => navigate(DASHBOARD_ROUTE)}
+							className='text-aromas_gray_text hover:underline'>
+							Panel de administración
+						</button>
+					</div>
+				)}
 			</div>
 		</main>
 	);

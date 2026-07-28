@@ -8,6 +8,6 @@ import 'leaflet/dist/leaflet.css';
 createRoot(document.getElementById('root')!).render(
 	<StrictMode>
 		<App />
-		<Toaster position='top-right' richColors />
-	</StrictMode>
+		<Toaster position='bottom-right' richColors duration={2000} />
+	</StrictMode>,
 );
