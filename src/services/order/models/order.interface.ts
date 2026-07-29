@@ -1,9 +1,17 @@
-export type IOrderStatus =
+export type IOrderStatusCode =
 	| 'PENDING'
 	| 'PAID'
 	| 'SHIPPED'
 	| 'DELIVERED'
-	| 'CANCELLED';
+	| 'CANCELLED'
+	| 'REFUNDED';
+
+/** Row of the cat-order-status catalogue, as the API populates it on an order. */
+export interface IOrderStatus {
+	_id: string;
+	code: IOrderStatusCode;
+	name: string;
+}
 
 export type IShippingType = 'PICKUP' | 'DELIVERY';
 

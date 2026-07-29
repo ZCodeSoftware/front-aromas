@@ -9,24 +9,26 @@ import { getApiErrorMessage } from '@/services/auth/utils/get-api-error-message'
 import type {
 	IOrder,
 	IOrderStatus,
+	IOrderStatusCode,
 	IPaginationMeta,
 } from '@/services/order/models/order.interface';
 
-const STATUS_LABELS: Record<IOrderStatus, string> = {
-	PENDING: 'Pendiente',
-	PAID: 'Pagado',
-	SHIPPED: 'Enviado',
-	DELIVERED: 'Entregado',
-	CANCELLED: 'Cancelado',
-};
-
-const STATUS_STYLES: Record<IOrderStatus, string> = {
+/**
+ * Only the colour lives here. The label comes from the cat-order-status row the
+ * API populates on every order, so renaming a status from the catalogue does not
+ * need a deploy, and a status this map does not know still renders.
+ */
+const STATUS_STYLES: Partial<Record<IOrderStatusCode, string>> = {
 	PENDING: 'bg-[#FEF9C3] text-yellow-700',
 	PAID: 'bg-[#DBEAFE] text-blue-700',
 	SHIPPED: 'bg-[#E0E7FF] text-indigo-700',
 	DELIVERED: 'bg-[#DCFCE7] text-aromas_success',
 	CANCELLED: 'bg-[#FEE2E2] text-red-700',
+	REFUNDED: 'bg-[#FEE2E2] text-red-700',
 };
+
+const statusStyle = (status: IOrderStatus) =>
+	STATUS_STYLES[status.code] ?? 'bg-[#F3F4F6] text-aromas_gray_text';
 
 const formatDate = (iso: string) =>
 	new Date(iso).toLocaleDateString('es-AR', {
@@ -143,8 +145,8 @@ const ProfileOrders = () => {
 							<div className='flex justify-between items-center'>
 								<p className='font-semibold'>{`Pedido #${order._id.slice(-6).toUpperCase()}`}</p>
 								<Badge
-									className={STATUS_STYLES[order.status]}>
-									{STATUS_LABELS[order.status]}
+									className={statusStyle(order.status)}>
+									{order.status.name}
 								</Badge>
 							</div>
 							<span className='text-aromas_gray_text'>
@@ -209,7 +211,7 @@ const ProfileOrders = () => {
 								${order.totalPrice}
 							</p>
 						</div>
-						{order.status === 'PENDING' && (
+						{order.status.code === 'PENDING' && (
 							<div className='flex justify-end'>
 								<Button
 									onClick={() => handleCancel(order)}
