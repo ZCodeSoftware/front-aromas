@@ -6,6 +6,18 @@ const getMyProfile = async (): Promise<IUserProfile> => {
 	return response.data;
 };
 
+const getAllUsers = async (): Promise<IUserProfile[]> => {
+	const response = await AppApiGateWay.get('/user');
+	return response.data;
+};
+
+const getUserById = async (id: string): Promise<IUserProfile> => {
+	const response = await AppApiGateWay.get(`/user/${id}`);
+	return response.data;
+};
+
 export const userGetService = {
 	getMyProfile,
+	getAllUsers,
+	getUserById,
 };

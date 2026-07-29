@@ -1,12 +1,12 @@
 import type { IProductForm } from '@/pages/dashboard/components/dashboardProducts/createProduct/models/product-form.interface';
-import { AppApiGateWayNoJWT } from '@/services/app.api.gateway-no-jwt';
+import { AppApiGateWay } from '@/services/app.api.gateway';
 
 export const putProduct = async (
 	id: string,
-	product: Partial<IProductForm>
+	product: Partial<IProductForm>,
 ) => {
 	try {
-		await AppApiGateWayNoJWT.put(`/product/${id}`, product);
+		await AppApiGateWay.put(`/product/${id}`, product);
 	} catch (error) {
 		console.error('Error al modificar producto', error);
 	}

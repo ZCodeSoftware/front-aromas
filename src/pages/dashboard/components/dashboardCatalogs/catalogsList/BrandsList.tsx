@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Pencil } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import {
 	Table,
 	TableBody,
@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button';
 import TableSkeleton from '../../TableSkeleton';
 import type { IBrand } from '@/services/catalogs/brand/models/brands.interface';
 import { brandsGetService } from '@/services/catalogs/brand/GET/brands.service.get';
+import { brandsDeleteService } from '@/services/catalogs/brand/DELETE/brands.service.delete';
+import { getApiErrorMessage } from '@/services/auth/utils/get-api-error-message';
 import UpdateBrand from '../updateCatalogs/UpdateBrand';
 
 const BrandsList = () => {
@@ -20,6 +22,7 @@ const BrandsList = () => {
 	const [brandsData, setBrandsData] = useState<IBrand[]>([]);
 	const [openUpdateModal, setOpenUpdateModal] = useState(false);
 	const [selectedBrand, setSelectedBrand] = useState<IBrand | null>(null);
+	const [deletingId, setDeletingId] = useState<string | null>(null);
 
 	const getData = async () => {
 		setLoading(true);
@@ -43,6 +46,24 @@ const BrandsList = () => {
 	const handleEditClick = (brand: IBrand) => {
 		setSelectedBrand(brand);
 		setOpenUpdateModal(true);
+	};
+
+	const handleDelete = async (brand: IBrand) => {
+		const confirmed = window.confirm(
+			`¿Seguro que querés eliminar "${brand.name}"?`
+		);
+		if (!confirmed) return;
+
+		setDeletingId(brand._id);
+		try {
+			await brandsDeleteService.deleteBrand(brand._id);
+			toast.success('Marca eliminada con éxito.');
+			getData();
+		} catch (error) {
+			toast.error(getApiErrorMessage(error, 'No se pudo eliminar la marca.'));
+		} finally {
+			setDeletingId(null);
+		}
 	};
 
 	if (loading) {
@@ -73,6 +94,13 @@ const BrandsList = () => {
 										size='icon'
 										onClick={() => handleEditClick(brands)}>
 										<Pencil className='h-4 w-4' />
+									</Button>
+									<Button
+										variant='ghost'
+										size='icon'
+										disabled={deletingId === brands._id}
+										onClick={() => handleDelete(brands)}>
+										<Trash2 className='h-4 w-4 text-red-600' />
 									</Button>
 								</TableCell>
 							</TableRow>
