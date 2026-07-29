@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Pencil } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import {
 	Table,
 	TableBody,
@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button';
 import TableSkeleton from '../../TableSkeleton';
 import type { IColor } from '@/services/catalogs/colors/models/colors.interface';
 import { colorsGetService } from '@/services/catalogs/colors/GET/colors.service.get';
+import { colorsDeleteService } from '@/services/catalogs/colors/DELETE/colors.service.delete';
+import { getApiErrorMessage } from '@/services/auth/utils/get-api-error-message';
 import UpdateColor from '../updateCatalogs/UpdateColor';
 
 const ColorsList = () => {
@@ -20,6 +22,7 @@ const ColorsList = () => {
 	const [colorsData, setColorsData] = useState<IColor[]>([]);
 	const [openUpdateModal, setOpenUpdateModal] = useState(false);
 	const [selectedColor, setSelectedColor] = useState<IColor | null>(null);
+	const [deletingId, setDeletingId] = useState<string | null>(null);
 
 	const getData = async () => {
 		setLoading(true);
@@ -43,6 +46,24 @@ const ColorsList = () => {
 	const handleEditClick = (color: IColor) => {
 		setSelectedColor(color);
 		setOpenUpdateModal(true);
+	};
+
+	const handleDelete = async (color: IColor) => {
+		const confirmed = window.confirm(
+			`¿Seguro que querés eliminar "${color.name}"?`
+		);
+		if (!confirmed) return;
+
+		setDeletingId(color._id);
+		try {
+			await colorsDeleteService.deleteColor(color._id);
+			toast.success('Color eliminado con éxito.');
+			getData();
+		} catch (error) {
+			toast.error(getApiErrorMessage(error, 'No se pudo eliminar el color.'));
+		} finally {
+			setDeletingId(null);
+		}
 	};
 
 	if (loading) {
@@ -82,6 +103,13 @@ const ColorsList = () => {
 										size='icon'
 										onClick={() => handleEditClick(colors)}>
 										<Pencil className='h-4 w-4' />
+									</Button>
+									<Button
+										variant='ghost'
+										size='icon'
+										disabled={deletingId === colors._id}
+										onClick={() => handleDelete(colors)}>
+										<Trash2 className='h-4 w-4 text-red-600' />
 									</Button>
 								</TableCell>
 							</TableRow>

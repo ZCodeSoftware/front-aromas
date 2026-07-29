@@ -58,7 +58,7 @@ const ProfileOrders = () => {
 				limit: 10,
 			});
 			setOrders((prev) =>
-				page === 1 ? response.data : [...prev, ...response.data]
+				page === 1 ? response.data : [...prev, ...response.data],
 			);
 			setPagination(response.pagination);
 		} catch {
@@ -75,22 +75,20 @@ const ProfileOrders = () => {
 
 	const handleCancel = async (order: IOrder) => {
 		const confirmed = window.confirm(
-			'¿Seguro que querés cancelar este pedido?'
+			'¿Seguro que querés cancelar este pedido?',
 		);
 		if (!confirmed) return;
 
 		setCancellingId(order._id);
 		try {
-			const updatedOrder = await orderPatchService.cancelOrder(
-				order._id
-			);
+			const updatedOrder = await orderPatchService.cancelOrder(order._id);
 			setOrders((prev) =>
-				prev.map((o) => (o._id === order._id ? updatedOrder : o))
+				prev.map((o) => (o._id === order._id ? updatedOrder : o)),
 			);
 			toast.success('Pedido cancelado con éxito.');
 		} catch (error) {
 			toast.error(
-				getApiErrorMessage(error, 'No se pudo cancelar el pedido.')
+				getApiErrorMessage(error, 'No se pudo cancelar el pedido.'),
 			);
 		} finally {
 			setCancellingId(null);
@@ -144,8 +142,7 @@ const ProfileOrders = () => {
 						<div className='flex flex-col text-sm mb-4'>
 							<div className='flex justify-between items-center'>
 								<p className='font-semibold'>{`Pedido #${order._id.slice(-6).toUpperCase()}`}</p>
-								<Badge
-									className={statusStyle(order.status)}>
+								<Badge className={statusStyle(order.status)}>
 									{order.status.name}
 								</Badge>
 							</div>

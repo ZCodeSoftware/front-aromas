@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Pencil } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import {
 	Table,
 	TableBody,
@@ -17,6 +17,8 @@ import {
 import { Button } from '@/components/ui/button';
 import type { ICategory } from '@/services/catalogs/categories/models/categories.interface';
 import { categoriesGetService } from '@/services/catalogs/categories/GET/categories.service.get';
+import { categoriesDeleteService } from '@/services/catalogs/categories/DELETE/categories.service.delete';
+import { getApiErrorMessage } from '@/services/auth/utils/get-api-error-message';
 import UpdateCategory from '../updateCatalogs/UpdateCategory';
 import TableSkeleton from '../../TableSkeleton';
 
@@ -27,6 +29,7 @@ const CategoriesList = () => {
 	const [selectedCategory, setSelectedCategory] = useState<ICategory | null>(
 		null
 	);
+	const [deletingId, setDeletingId] = useState<string | null>(null);
 
 	const getData = async () => {
 		setLoading(true);
@@ -50,6 +53,26 @@ const CategoriesList = () => {
 	const handleEditClick = (category: ICategory) => {
 		setSelectedCategory(category);
 		setOpenUpdateModal(true);
+	};
+
+	const handleDelete = async (category: ICategory) => {
+		const confirmed = window.confirm(
+			`¿Seguro que querés eliminar "${category.name}"?`
+		);
+		if (!confirmed) return;
+
+		setDeletingId(category._id);
+		try {
+			await categoriesDeleteService.deleteCategory(category._id);
+			toast.success('Categoría eliminada con éxito.');
+			getData();
+		} catch (error) {
+			toast.error(
+				getApiErrorMessage(error, 'No se pudo eliminar la categoría.')
+			);
+		} finally {
+			setDeletingId(null);
+		}
 	};
 
 	if (loading) {
@@ -115,6 +138,13 @@ const CategoriesList = () => {
 											handleEditClick(category)
 										}>
 										<Pencil className='h-4 w-4' />
+									</Button>
+									<Button
+										variant='ghost'
+										size='icon'
+										disabled={deletingId === category._id}
+										onClick={() => handleDelete(category)}>
+										<Trash2 className='h-4 w-4 text-red-600' />
 									</Button>
 								</TableCell>
 							</TableRow>

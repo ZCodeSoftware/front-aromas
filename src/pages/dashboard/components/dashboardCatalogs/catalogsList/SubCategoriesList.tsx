@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Pencil } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import {
 	Table,
 	TableBody,
@@ -12,6 +12,8 @@ import {
 import { Button } from '@/components/ui/button';
 import TableSkeleton from '../../TableSkeleton';
 import { subCategoriesGetService } from '@/services/catalogs/sub-categories/GET/sub-categories.service.get';
+import { subCategoriesDeleteService } from '@/services/catalogs/sub-categories/DELETE/sub-categories.service.delete';
+import { getApiErrorMessage } from '@/services/auth/utils/get-api-error-message';
 import type { ISubCategory } from '@/services/catalogs/sub-categories/models/sub-categories.interface';
 import UpdateSubCategory from '../updateCatalogs/UpdateSubCategory';
 
@@ -23,6 +25,7 @@ const SubCategoriesList = () => {
 	const [openUpdateModal, setOpenUpdateModal] = useState(false);
 	const [selectedSubCategory, setSelectedSubCategory] =
 		useState<ISubCategory | null>(null);
+	const [deletingId, setDeletingId] = useState<string | null>(null);
 
 	const getData = async () => {
 		setLoading(true);
@@ -46,6 +49,26 @@ const SubCategoriesList = () => {
 	const handleEditClick = (subCategory: ISubCategory) => {
 		setSelectedSubCategory(subCategory);
 		setOpenUpdateModal(true);
+	};
+
+	const handleDelete = async (subCategory: ISubCategory) => {
+		const confirmed = window.confirm(
+			`¿Seguro que querés eliminar "${subCategory.name}"?`
+		);
+		if (!confirmed) return;
+
+		setDeletingId(subCategory._id);
+		try {
+			await subCategoriesDeleteService.deleteSubCategory(subCategory._id);
+			toast.success('Sub-categoría eliminada con éxito.');
+			getData();
+		} catch (error) {
+			toast.error(
+				getApiErrorMessage(error, 'No se pudo eliminar la sub-categoría.')
+			);
+		} finally {
+			setDeletingId(null);
+		}
 	};
 
 	if (loading) {
@@ -78,6 +101,17 @@ const SubCategoriesList = () => {
 											handleEditClick(subCategories)
 										}>
 										<Pencil className='h-4 w-4' />
+									</Button>
+									<Button
+										variant='ghost'
+										size='icon'
+										disabled={
+											deletingId === subCategories._id
+										}
+										onClick={() =>
+											handleDelete(subCategories)
+										}>
+										<Trash2 className='h-4 w-4 text-red-600' />
 									</Button>
 								</TableCell>
 							</TableRow>

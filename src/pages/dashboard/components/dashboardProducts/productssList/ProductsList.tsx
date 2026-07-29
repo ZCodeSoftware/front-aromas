@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Pencil } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 
 import {
 	Table,
@@ -23,6 +23,8 @@ import { productsGetService } from '@/services/products/GET/products.service.get
 import TableSkeleton from '../../TableSkeleton';
 import UpdateProduct from '../updateProduct/UpdateProduct';
 import { putProduct } from '@/services/products/PUT/products.service.put';
+import { productsDeleteService } from '@/services/products/DELETE/products.service.delete';
+import { getApiErrorMessage } from '@/services/auth/utils/get-api-error-message';
 
 const ProductsList = () => {
 	const [loading, setLoading] = useState(true);
@@ -31,6 +33,7 @@ const ProductsList = () => {
 	const [selectedProduct, setSelectedProduct] = useState<IProductData | null>(
 		null
 	);
+	const [deletingId, setDeletingId] = useState<string | null>(null);
 
 	const getData = async () => {
 		setLoading(true);
@@ -72,6 +75,26 @@ const ProductsList = () => {
 			toast.success('Estado del producto actualizado.');
 		} catch {
 			toast.error('Error al actualizar el estado.');
+		}
+	};
+
+	const handleDelete = async (product: IProductData) => {
+		const confirmed = window.confirm(
+			`¿Seguro que querés eliminar "${product.name}"?`
+		);
+		if (!confirmed) return;
+
+		setDeletingId(product._id);
+		try {
+			await productsDeleteService.deleteProduct(product._id);
+			toast.success('Producto eliminado con éxito.');
+			getData();
+		} catch (error) {
+			toast.error(
+				getApiErrorMessage(error, 'No se pudo eliminar el producto.')
+			);
+		} finally {
+			setDeletingId(null);
 		}
 	};
 
@@ -146,6 +169,13 @@ const ProductsList = () => {
 											handleEditClick(product)
 										}>
 										<Pencil className='h-4 w-4' />
+									</Button>
+									<Button
+										variant='ghost'
+										size='icon'
+										disabled={deletingId === product._id}
+										onClick={() => handleDelete(product)}>
+										<Trash2 className='h-4 w-4 text-red-600' />
 									</Button>
 								</TableCell>
 							</TableRow>

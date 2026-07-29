@@ -1,14 +1,14 @@
 import type { INamedForm } from '@/pages/dashboard/components/dashboardCatalogs/createCatalogs/models/named-form.interface';
-import { AppApiGateWayNoJWT } from '@/services/app.api.gateway-no-jwt';
+import { AppApiGateWay } from '@/services/app.api.gateway';
 
 export const putAssociatedEmotion = async (
 	id: string,
-	associatedEmotion: INamedForm
+	associatedEmotion: INamedForm,
 ) => {
 	try {
-		await AppApiGateWayNoJWT.put(
+		await AppApiGateWay.put(
 			`/cat-associated-emotion/${id}`,
-			associatedEmotion
+			associatedEmotion,
 		);
 	} catch (error) {
 		console.error('Error al modificar la emoción', error);

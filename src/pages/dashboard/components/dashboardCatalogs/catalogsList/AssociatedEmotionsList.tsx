@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Pencil } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import {
 	Table,
 	TableBody,
@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button';
 import TableSkeleton from '../../TableSkeleton';
 import type { IAssociatedEmotion } from '@/services/catalogs/associated-emotions/models/associated-emotion.interface';
 import { associatedEmotionsGetService } from '@/services/catalogs/associated-emotions/GET/associated-emotions.service';
+import { associatedEmotionsDeleteService } from '@/services/catalogs/associated-emotions/DELETE/associated-emotions.service.delete';
+import { getApiErrorMessage } from '@/services/auth/utils/get-api-error-message';
 import UpdateAssociatedEmotion from '../updateCatalogs/UpdateAssociatedEmotion';
 
 const AssociatedEmotionsList = () => {
@@ -23,6 +25,7 @@ const AssociatedEmotionsList = () => {
 	const [openUpdateModal, setOpenUpdateModal] = useState(false);
 	const [selectedAssociatedEmotion, setSelectedAssociatedEmotion] =
 		useState<IAssociatedEmotion | null>(null);
+	const [deletingId, setDeletingId] = useState<string | null>(null);
 
 	const getData = async () => {
 		setLoading(true);
@@ -47,6 +50,28 @@ const AssociatedEmotionsList = () => {
 	const handleEditClick = (associatedEmotion: IAssociatedEmotion) => {
 		setSelectedAssociatedEmotion(associatedEmotion);
 		setOpenUpdateModal(true);
+	};
+
+	const handleDelete = async (associatedEmotion: IAssociatedEmotion) => {
+		const confirmed = window.confirm(
+			`¿Seguro que querés eliminar "${associatedEmotion.name}"?`
+		);
+		if (!confirmed) return;
+
+		setDeletingId(associatedEmotion._id);
+		try {
+			await associatedEmotionsDeleteService.deleteAssociatedEmotion(
+				associatedEmotion._id
+			);
+			toast.success('Emoción eliminada con éxito.');
+			getData();
+		} catch (error) {
+			toast.error(
+				getApiErrorMessage(error, 'No se pudo eliminar la emoción.')
+			);
+		} finally {
+			setDeletingId(null);
+		}
 	};
 
 	if (loading) {
@@ -79,6 +104,18 @@ const AssociatedEmotionsList = () => {
 											handleEditClick(associatedEmotions)
 										}>
 										<Pencil className='h-4 w-4' />
+									</Button>
+									<Button
+										variant='ghost'
+										size='icon'
+										disabled={
+											deletingId ===
+											associatedEmotions._id
+										}
+										onClick={() =>
+											handleDelete(associatedEmotions)
+										}>
+										<Trash2 className='h-4 w-4 text-red-600' />
 									</Button>
 								</TableCell>
 							</TableRow>

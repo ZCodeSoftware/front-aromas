@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Pencil } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import {
 	Table,
 	TableBody,
@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button';
 import TableSkeleton from '../../TableSkeleton';
 import type { IEssence } from '@/services/catalogs/essences/models/essences.interface';
 import { essencesGetService } from '@/services/catalogs/essences/GET/essences.service.get';
+import { essencesDeleteService } from '@/services/catalogs/essences/DELETE/essences.service.delete';
+import { getApiErrorMessage } from '@/services/auth/utils/get-api-error-message';
 import UpdateEssence from '../updateCatalogs/UpdateEssence';
 
 const EssencesList = () => {
@@ -22,6 +24,7 @@ const EssencesList = () => {
 	const [selectedEssence, setSelectedEssence] = useState<IEssence | null>(
 		null
 	);
+	const [deletingId, setDeletingId] = useState<string | null>(null);
 
 	const getData = async () => {
 		setLoading(true);
@@ -45,6 +48,26 @@ const EssencesList = () => {
 	const handleEditClick = (essence: IEssence) => {
 		setSelectedEssence(essence);
 		setOpenUpdateModal(true);
+	};
+
+	const handleDelete = async (essence: IEssence) => {
+		const confirmed = window.confirm(
+			`¿Seguro que querés eliminar "${essence.name}"?`
+		);
+		if (!confirmed) return;
+
+		setDeletingId(essence._id);
+		try {
+			await essencesDeleteService.deleteEssence(essence._id);
+			toast.success('Esencia eliminada con éxito.');
+			getData();
+		} catch (error) {
+			toast.error(
+				getApiErrorMessage(error, 'No se pudo eliminar la esencia.')
+			);
+		} finally {
+			setDeletingId(null);
+		}
 	};
 
 	if (loading) {
@@ -77,6 +100,13 @@ const EssencesList = () => {
 											handleEditClick(essences)
 										}>
 										<Pencil className='h-4 w-4' />
+									</Button>
+									<Button
+										variant='ghost'
+										size='icon'
+										disabled={deletingId === essences._id}
+										onClick={() => handleDelete(essences)}>
+										<Trash2 className='h-4 w-4 text-red-600' />
 									</Button>
 								</TableCell>
 							</TableRow>

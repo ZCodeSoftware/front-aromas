@@ -13,6 +13,8 @@ export interface IOrderStatus {
 	name: string;
 }
 
+export type IOrderChannel = 'ONLINE' | 'POS';
+
 export type IShippingType = 'PICKUP' | 'DELIVERY';
 
 export interface IOrderItemProduct {
@@ -44,6 +46,13 @@ export interface IOrderShippingAddress {
 	floorAddress?: string;
 }
 
+export interface IOrderCustomer {
+	name?: string;
+	email?: string;
+	phone?: string;
+	taxId?: string;
+}
+
 export interface IOrder {
 	_id: string;
 	items: IOrderItem[];
@@ -54,6 +63,9 @@ export interface IOrder {
 	shippingType: IShippingType;
 	shippingAddress: IOrderShippingAddress | null;
 	status: IOrderStatus;
+	channel?: IOrderChannel;
+	user?: string | null;
+	customer?: IOrderCustomer | null;
 	createdAt: string;
 	updatedAt: string;
 }

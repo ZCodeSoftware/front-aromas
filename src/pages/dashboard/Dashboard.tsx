@@ -6,6 +6,14 @@ import DashboardCreateProduct from './components/dashboardProducts/createProduct
 import Sidebar from './components/Sidebar';
 import DashboardCatalogsList from './components/dashboardCatalogs/catalogsList/DashboardCatalogList';
 import DashboardCreateCatalogs from './components/dashboardCatalogs/createCatalogs/DashboardCreate';
+import TypeHousingsList from './components/dashboardCatalogs/catalogsList/TypeHousingsList';
+import PaymentMethodsList from './components/dashboardCatalogs/catalogsList/PaymentMethodsList';
+import RolesList from './components/dashboardCatalogs/catalogsList/RolesList';
+import UsersList from './components/dashboardUsers/usersList/UsersList';
+import OrdersList from './components/dashboardOrders/ordersList/OrdersList';
+import RegisterSale from './components/dashboardPos/registerSale/RegisterSale';
+import SalesList from './components/dashboardPos/salesList/SalesList';
+import ReviewsList from './components/dashboardReviews/reviewsList/ReviewsList';
 import Navbar from '@/layout/components/navbar/Navbar';
 
 const Dashboard: React.FC = () => {
@@ -44,6 +52,70 @@ const Dashboard: React.FC = () => {
 					id: 'create-catalog',
 					name: 'Crear Catálogo',
 					component: <DashboardCreateCatalogs />,
+				},
+			],
+		},
+		{
+			id: 'type-housings',
+			name: 'Tipos de Vivienda',
+			component: <TypeHousingsList />,
+		},
+		{
+			id: 'payment-methods',
+			name: 'Método de Pago',
+			component: <PaymentMethodsList />,
+		},
+		{
+			id: 'users',
+			name: 'Usuarios',
+			subItems: [
+				{
+					id: 'user-list',
+					name: 'Lista de Usuarios',
+					component: <UsersList />,
+				},
+				{
+					id: 'role-list',
+					name: 'Roles',
+					component: <RolesList />,
+				},
+			],
+		},
+		{
+			id: 'orders',
+			name: 'Pedidos',
+			subItems: [
+				{
+					id: 'order-list',
+					name: 'Lista de Pedidos',
+					component: <OrdersList />,
+				},
+			],
+		},
+		{
+			id: 'pos',
+			name: 'Punto de Venta',
+			subItems: [
+				{
+					id: 'pos-register-sale',
+					name: 'Registrar Venta',
+					component: <RegisterSale />,
+				},
+				{
+					id: 'pos-sales-list',
+					name: 'Ventas',
+					component: <SalesList />,
+				},
+			],
+		},
+		{
+			id: 'reviews',
+			name: 'Reseñas',
+			subItems: [
+				{
+					id: 'review-list',
+					name: 'Moderación de Reseñas',
+					component: <ReviewsList />,
 				},
 			],
 		},
