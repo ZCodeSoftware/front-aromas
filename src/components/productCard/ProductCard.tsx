@@ -7,9 +7,22 @@ import {
 	CardTitle,
 } from '@/components/ui/card';
 import { useState, useRef, useEffect } from 'react';
+import { toast } from 'sonner';
+import { useCartStore } from '@/stores/cart.store';
 import type { IProductCardProps } from './models/product-card.interface';
 
 const ProductCard = ({ product }: IProductCardProps) => {
+	const addItem = useCartStore((state) => state.addItem);
+
+	const handleAddToCart = async () => {
+		try {
+			await addItem(product);
+			toast.success(`${product.name} agregado al carrito.`);
+		} catch {
+			// error already surfaced via toast inside the cart store
+		}
+	};
+
 	const [showTooltip, setShowTooltip] = useState(false);
 	const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 	const descriptionRef = useRef<HTMLParagraphElement>(null);
@@ -81,7 +94,9 @@ const ProductCard = ({ product }: IProductCardProps) => {
 					</CardDescription>
 				</CardContent>
 				<CardFooter className='py-2 px-0 pt-0 mt-auto'>
-					<button className='w-full bg-aromas_pink text-aromas_gray_text font-bold py-2 px-4 rounded-3xl flex items-center justify-center gap-2 border border-transparent hover:border-aromas_fucsia transition-colors hover:cursor-pointer'>
+					<button
+						onClick={handleAddToCart}
+						className='w-full bg-aromas_pink text-aromas_gray_text font-bold py-2 px-4 rounded-3xl flex items-center justify-center gap-2 border border-transparent hover:border-aromas_fucsia transition-colors hover:cursor-pointer'>
 						<ShoppingBag className='h-5 w-5' />
 						<span>Añadir al carrito</span>
 					</button>

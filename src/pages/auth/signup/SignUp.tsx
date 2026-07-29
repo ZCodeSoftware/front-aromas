@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { DialogClose } from '@/components/ui/dialog';
 import { useModalStore } from '@/stores/modal.store';
 import { useAuthStore } from '@/stores/auth.store';
+import { useCartStore } from '@/stores/cart.store';
 import { authPostService } from '@/services/auth/POST/auth.service.post';
 import { getApiErrorMessage } from '@/services/auth/utils/get-api-error-message';
 import {
@@ -25,6 +26,9 @@ interface SignUpForm {
 const SignUp = () => {
 	const { open, close } = useModalStore();
 	const setUser = useAuthStore((state) => state.setUser);
+	const mergeGuestCartIntoBackend = useCartStore(
+		(state) => state.mergeGuestCartIntoBackend
+	);
 
 	const [form, setForm] = useState<SignUpForm>({
 		email: '',
@@ -75,6 +79,7 @@ const SignUp = () => {
 				password: form.password,
 			});
 			setUser(authResponse);
+			await mergeGuestCartIntoBackend();
 
 			toast.success('¡Cuenta creada con éxito!');
 			setForm({ email: '', password: '', confirmPassword: '' });

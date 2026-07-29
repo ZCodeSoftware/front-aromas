@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { DialogClose } from '@/components/ui/dialog';
 import { useModalStore } from '@/stores/modal.store';
 import { useAuthStore } from '@/stores/auth.store';
+import { useCartStore } from '@/stores/cart.store';
 import { authPostService } from '@/services/auth/POST/auth.service.post';
 import { getApiErrorMessage } from '@/services/auth/utils/get-api-error-message';
 import type { ILoginPayload } from '@/services/auth/models/auth.interface';
@@ -15,6 +16,9 @@ import type { ILoginPayload } from '@/services/auth/models/auth.interface';
 const LogIn = () => {
 	const { open, close } = useModalStore();
 	const setUser = useAuthStore((state) => state.setUser);
+	const mergeGuestCartIntoBackend = useCartStore(
+		(state) => state.mergeGuestCartIntoBackend
+	);
 
 	const [form, setForm] = useState<ILoginPayload>({
 		email: '',
@@ -39,6 +43,7 @@ const LogIn = () => {
 		try {
 			const authResponse = await authPostService.login(form);
 			setUser(authResponse);
+			await mergeGuestCartIntoBackend();
 			toast.success(
 				`¡Bienvenido${authResponse.name ? `, ${authResponse.name}` : ''}!`,
 			);

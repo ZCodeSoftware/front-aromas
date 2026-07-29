@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
 	Search,
 	UserRound,
@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import SearchBar from './components/searchBar/SearchBar';
 import Profile from '@/pages/profile/Profile';
+import Cart from '@/pages/cart/Cart';
 import {
 	Popover,
 	PopoverContent,
@@ -16,16 +17,26 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/stores/auth.store';
 import { useModalStore } from '@/stores/modal.store';
+import { useCartStore } from '@/stores/cart.store';
 
 const Navbar = () => {
 	const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
 	const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+	const [isCartOpen, setIsCartOpen] = useState(false);
 	const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 	const openModal = useModalStore((state) => state.open);
+	const totalCartItems = useCartStore((state) => state.getTotalItems());
+	const fetchCart = useCartStore((state) => state.fetchCart);
+
+	useEffect(() => {
+		if (isAuthenticated) fetchCart();
+	}, [isAuthenticated, fetchCart]);
 
 	if (typeof window !== 'undefined') {
 		document.body.style.overflow =
-			isSearchOpen || isProfileModalOpen ? 'hidden' : 'auto';
+			isSearchOpen || isProfileModalOpen || isCartOpen
+				? 'hidden'
+				: 'auto';
 	}
 
 	return (
@@ -126,11 +137,16 @@ const Navbar = () => {
 								)}
 							</li>
 							<li>
-								<a
-									href='#'
-									className='flex text-aromas_gray_text hover:text-gray-900'>
+								<button
+									onClick={() => setIsCartOpen(true)}
+									className='relative flex text-aromas_gray_text hover:text-gray-900'>
 									<ShoppingBag />
-								</a>
+									{totalCartItems > 0 && (
+										<span className='absolute -top-2 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-aromas_fucsia px-1 text-[10px] font-bold text-white'>
+											{totalCartItems}
+										</span>
+									)}
+								</button>
 							</li>
 							<li className='flex lg:hidden'>
 								<Menu />
@@ -142,6 +158,7 @@ const Navbar = () => {
 			{isProfileModalOpen && (
 				<Profile onClose={() => setIsProfileModalOpen(false)} />
 			)}
+			{isCartOpen && <Cart onClose={() => setIsCartOpen(false)} />}
 		</header>
 	);
 };
