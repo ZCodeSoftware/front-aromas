@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { IProfileSubpagesProps } from '../models/profile-subpages-props.interface';
 import type { IUserProfile } from '@/services/user/models/user.interface';
 import { useAuthStore } from '@/stores/auth.store';
+import { useCartStore } from '@/stores/cart.store';
 import { toast } from 'sonner';
 import { DASHBOARD_ROUTE } from '@/config/routes';
 
@@ -18,9 +19,11 @@ export const ProfileHome: React.FC<ProfileHomeProps> = ({
 }) => {
 	const navigate = useNavigate();
 	const logout = useAuthStore((state) => state.logout);
+	const resetLocalCart = useCartStore((state) => state.resetLocalCart);
 	const isAdmin = profile?.roles.some((role) => role.name === 'ADMIN');
 	const handleLogout = () => {
 		logout();
+		resetLocalCart();
 		toast.success('Hasta luego. ¡Te esperamos pronto!');
 		if (setIsClosing) setIsClosing(true);
 		if (onClose) setTimeout(() => onClose(), 200);

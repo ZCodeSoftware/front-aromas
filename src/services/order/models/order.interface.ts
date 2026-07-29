@@ -63,3 +63,10 @@ export interface IPaginatedOrders {
 	data: IOrder[];
 	pagination: IPaginationMeta;
 }
+
+export interface ICreateOrderPayload {
+	paymentMethod: string;
+	shippingType: IShippingType;
+	addressId?: string;
+	shippingPrice?: number;
+}
