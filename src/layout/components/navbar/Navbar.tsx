@@ -1,15 +1,44 @@
-import { useState } from 'react';
-import { Search, UserRound, ShoppingBag, Menu } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+	Search,
+	UserRound,
+	ShoppingBag,
+	Menu,
+	// Settings
+} from 'lucide-react';
 import SearchBar from './components/searchBar/SearchBar';
+import MobileMenu from './components/mobileMenu/MobileMenu';
 import Profile from '@/pages/profile/Profile';
+import Cart from '@/pages/cart/Cart';
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { useAuthStore } from '@/stores/auth.store';
+import { useModalStore } from '@/stores/modal.store';
+import { useCartStore } from '@/stores/cart.store';
 
 const Navbar = () => {
 	const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
 	const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+	const [isCartOpen, setIsCartOpen] = useState(false);
+	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+	const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+	const openModal = useModalStore((state) => state.open);
+	const totalCartItems = useCartStore((state) => state.getTotalItems());
+	const fetchCart = useCartStore((state) => state.fetchCart);
+
+	useEffect(() => {
+		if (isAuthenticated) fetchCart();
+	}, [isAuthenticated, fetchCart]);
 
 	if (typeof window !== 'undefined') {
 		document.body.style.overflow =
-			isSearchOpen || isProfileModalOpen ? 'hidden' : 'auto';
+			isSearchOpen || isProfileModalOpen || isCartOpen || isMobileMenuOpen
+				? 'hidden'
+				: 'auto';
 	}
 
 	return (
@@ -19,8 +48,8 @@ const Navbar = () => {
 					<SearchBar onClose={() => setIsSearchOpen(false)} />
 				</div>
 			) : (
-				<nav className='bg-aromas_nav_bg shadow-md py-4 px-8 flex justify-between items-center'>
-					<div className='flex justify-between items-center w-[30%]'>
+				<nav className='bg-aromas_nav_bg shadow-md py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center'>
+					<div className='flex justify-between items-center w-auto lg:w-[30%]'>
 						<div className='text-xl text-center font-bold text-aromas_fucsia'>
 							Aromas y Armonía
 						</div>
@@ -57,6 +86,13 @@ const Navbar = () => {
 					</div>
 					<div>
 						<ul className='flex space-x-6 items-center'>
+							{/* <li>
+								<a
+									href='/dashboard'
+									className='flex text-aromas_gray_text hover:text-gray-900'>
+									<Settings />
+								</a>
+							</li> */}
 							<li>
 								<button
 									onClick={() => setIsSearchOpen(true)}
@@ -65,21 +101,64 @@ const Navbar = () => {
 								</button>
 							</li>
 							<li>
-								<button
-									onClick={() => setIsProfileModalOpen(true)}
-									className='flex text-aromas_gray_text hover:text-gray-900'>
-									<UserRound />
-								</button>
+								{isAuthenticated ? (
+									<button
+										onClick={() =>
+											setIsProfileModalOpen(true)
+										}
+										className='flex text-aromas_gray_text hover:text-gray-900'>
+										<UserRound />
+									</button>
+								) : (
+									<Popover>
+										<PopoverTrigger asChild>
+											<button className='flex text-aromas_gray_text hover:text-gray-900'>
+												<UserRound />
+											</button>
+										</PopoverTrigger>
+										<PopoverContent
+											align='end'
+											className='flex w-48 flex-col gap-2 p-3 bg-aromas_nav_bg'>
+											<Button
+												variant='outline'
+												className='rounded-full border-aromas_pink text-aromas_gray_text hover:bg-aromas_pink/10'
+												onClick={() =>
+													openModal('login')
+												}>
+												Iniciar sesión
+											</Button>
+											<Button
+												className='rounded-full bg-aromas_pink text-aromas_gray_text hover:bg-aromas_pink/80'
+												onClick={() =>
+													openModal('signup')
+												}>
+												Registrarse
+											</Button>
+										</PopoverContent>
+									</Popover>
+								)}
 							</li>
 							<li>
-								<a
-									href='#'
-									className='flex text-aromas_gray_text hover:text-gray-900'>
+								<button
+									onClick={() => setIsCartOpen(true)}
+									className='relative flex text-aromas_gray_text hover:text-gray-900'>
 									<ShoppingBag />
-								</a>
+									{totalCartItems > 0 && (
+										<span className='absolute -top-2 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-aromas_fucsia px-1 text-[10px] font-bold text-white'>
+											{totalCartItems}
+										</span>
+									)}
+								</button>
 							</li>
 							<li className='flex lg:hidden'>
-								<Menu />
+								<button
+									type='button'
+									onClick={() => setIsMobileMenuOpen(true)}
+									aria-label='Abrir menú de navegación'
+									aria-haspopup='dialog'
+									className='flex text-aromas_gray_text hover:text-gray-900'>
+									<Menu />
+								</button>
 							</li>
 						</ul>
 					</div>
@@ -87,6 +166,10 @@ const Navbar = () => {
 			)}
 			{isProfileModalOpen && (
 				<Profile onClose={() => setIsProfileModalOpen(false)} />
+			)}
+			{isCartOpen && <Cart onClose={() => setIsCartOpen(false)} />}
+			{isMobileMenuOpen && (
+				<MobileMenu onClose={() => setIsMobileMenuOpen(false)} />
 			)}
 		</header>
 	);

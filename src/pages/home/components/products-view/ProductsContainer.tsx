@@ -100,7 +100,7 @@ const ProductsContainer = () => {
 	};
 
 	return (
-		<div className='xl:w-4/5 h-screen flex flex-col items-center mx-auto px-6 shadow-none bg-aromas_home_bg'>
+		<div className='xl:w-4/5 min-h-screen flex flex-col items-center mx-auto px-6 shadow-none bg-aromas_home_bg'>
 			<div className='w-full max-w-6xl'>
 				<div className='flex justify-between items-center w-full mb-6 '>
 					<h1 className='text-2xl text-center font-bold text-aromas_gray_text'>

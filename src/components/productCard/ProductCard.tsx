@@ -7,10 +7,22 @@ import {
 	CardTitle,
 } from '@/components/ui/card';
 import { useState, useRef, useEffect } from 'react';
-import productImage from '../../mocks/products/product-image/dd0ae5f22f356d984fc7741ecaf2df9dcda764a3.png';
+import { toast } from 'sonner';
+import { useCartStore } from '@/stores/cart.store';
 import type { IProductCardProps } from './models/product-card.interface';
 
 const ProductCard = ({ product }: IProductCardProps) => {
+	const addItem = useCartStore((state) => state.addItem);
+
+	const handleAddToCart = async () => {
+		try {
+			await addItem(product);
+			toast.success(`${product.name} agregado al carrito.`);
+		} catch {
+			// error already surfaced via toast inside the cart store
+		}
+	};
+
 	const [showTooltip, setShowTooltip] = useState(false);
 	const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 	const descriptionRef = useRef<HTMLParagraphElement>(null);
@@ -46,11 +58,11 @@ const ProductCard = ({ product }: IProductCardProps) => {
 
 	return (
 		<>
-			<Card className='w-full max-w-[389px] h-[420px] rounded-2xl overflow-hidden shadow-none bg-aromas_home_bg border-none flex flex-col gap-4 py-0'>
+			<Card className='w-full max-w-[389px] min-h-[420px] rounded-2xl overflow-hidden shadow-none bg-aromas_home_bg border-none flex flex-col gap-4 py-0'>
 				<div className='relative'>
 					<div className='w-full aspect-[16/9] h-64'>
 						<img
-							src={productImage}
+							src={product.images[0]}
 							alt={product.name}
 							className='object-cover w-full h-full rounded-lg'
 						/>
@@ -82,7 +94,9 @@ const ProductCard = ({ product }: IProductCardProps) => {
 					</CardDescription>
 				</CardContent>
 				<CardFooter className='py-2 px-0 pt-0 mt-auto'>
-					<button className='w-full bg-aromas_pink text-aromas_gray_text font-bold py-2 px-4 rounded-3xl flex items-center justify-center gap-2 border border-transparent hover:border-aromas_fucsia transition-colors hover:cursor-pointer'>
+					<button
+						onClick={handleAddToCart}
+						className='w-full bg-aromas_pink text-aromas_gray_text font-bold py-2 px-4 rounded-3xl flex items-center justify-center gap-2 border border-transparent hover:border-aromas_fucsia transition-colors hover:cursor-pointer'>
 						<ShoppingBag className='h-5 w-5' />
 						<span>Añadir al carrito</span>
 					</button>
