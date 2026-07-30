@@ -1,3 +1,179 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * Chart palette. Declared as custom properties so every chart is written
+ * against roles instead of raw hex, and so the dark steps swap in one place.
+ * The categorical order is validated (adjacent CVD ΔE >= 8, normal-vision
+ * ΔE >= 15) against the #ffffff card surface these charts render on.
+ */
+.viz-root {
+	color-scheme: light;
+
+	--viz-surface: #ffffff;
+	--viz-ink: #1f1f1f;
+	--viz-ink-secondary: #52514e;
+	--viz-ink-axis: #575652;
+	--viz-grid: #dedcd5;
+	--viz-baseline: #a8a7a0;
+	--viz-deemphasis: #b9b8b1;
+
+	--viz-series-1: #2a78d6; /* blue */
+	--viz-series-2: #eb6834; /* orange */
+	--viz-series-3: #1baf7a; /* aqua */
+	--viz-series-4: #eda100; /* yellow */
+	--viz-series-5: #e87ba4; /* magenta */
+	--viz-series-6: #008300; /* green */
+	--viz-series-7: #4a3aa7; /* violet */
+	--viz-series-8: #e34948; /* red */
+
+	/*
+	 * Ordered scale: one hue, five steps, low magnitude -> high. Validated as
+	 * an ordinal ramp (monotone lightness, adjacent ΔL >= 0.06, light end
+	 * 2.11:1 on this surface). Each step ships the ink that clears 4.5:1 on
+	 * it, so a value printed inside a heat cell always reads.
+	 */
+	--viz-ord-1: #86b6ef;
+	--viz-ord-2: #5598e7;
+	--viz-ord-3: #256abf;
+	--viz-ord-4: #184f95;
+	--viz-ord-5: #0d366b;
+	--viz-on-ord-1: #1f1f1f;
+	--viz-on-ord-2: #1f1f1f;
+	--viz-on-ord-3: #ffffff;
+	--viz-on-ord-4: #ffffff;
+	--viz-on-ord-5: #ffffff;
+
+	--viz-status-good: #0ca30c;
+	--viz-status-warning: #fab219;
+	--viz-status-serious: #ec835a;
+	--viz-status-critical: #d03b3b;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:where(:not([data-theme='light'])) .viz-root {
+		color-scheme: dark;
+
+		--viz-surface: #1a1a19;
+		--viz-ink: #ffffff;
+		--viz-ink-secondary: #c3c2b7;
+		--viz-ink-axis: #c3c2b7;
+		--viz-grid: #2c2c2a;
+		--viz-baseline: #383835;
+		--viz-deemphasis: #6b6a66;
+
+		--viz-series-1: #3987e5;
+		--viz-series-2: #d95926;
+		--viz-series-3: #199e70;
+		--viz-series-4: #c98500;
+		--viz-series-5: #d55181;
+		--viz-series-6: #008300;
+		--viz-series-7: #9085e9;
+		--viz-series-8: #e66767;
+
+		/* Reversed for the dark surface: more magnitude reads lighter, and the
+		   darkest step stops at 2.15:1 rather than sinking into the surface. */
+		--viz-ord-1: #184f95;
+		--viz-ord-2: #256abf;
+		--viz-ord-3: #3987e5;
+		--viz-ord-4: #86b6ef;
+		--viz-ord-5: #cde2fb;
+		--viz-on-ord-1: #ffffff;
+		--viz-on-ord-2: #ffffff;
+		--viz-on-ord-3: #1f1f1f;
+		--viz-on-ord-4: #1f1f1f;
+		--viz-on-ord-5: #1f1f1f;
+	}
+}
+
+:root[data-theme='dark'] .viz-root {
+	color-scheme: dark;
+
+	--viz-surface: #1a1a19;
+	--viz-ink: #ffffff;
+	--viz-ink-secondary: #c3c2b7;
+	--viz-ink-axis: #c3c2b7;
+	--viz-grid: #2c2c2a;
+	--viz-baseline: #383835;
+	--viz-deemphasis: #6b6a66;
+
+	--viz-series-1: #3987e5;
+	--viz-series-2: #d95926;
+	--viz-series-3: #199e70;
+	--viz-series-4: #c98500;
+	--viz-series-5: #d55181;
+	--viz-series-6: #008300;
+	--viz-series-7: #9085e9;
+	--viz-series-8: #e66767;
+
+	--viz-ord-1: #184f95;
+	--viz-ord-2: #256abf;
+	--viz-ord-3: #3987e5;
+	--viz-ord-4: #86b6ef;
+	--viz-ord-5: #cde2fb;
+	--viz-on-ord-1: #ffffff;
+	--viz-on-ord-2: #ffffff;
+	--viz-on-ord-3: #1f1f1f;
+	--viz-on-ord-4: #1f1f1f;
+	--viz-on-ord-5: #1f1f1f;
+}
+
+/*
+ * Texture is the backup identity channel: hue carries nothing under a forced
+ * colour theme or on a grayscale print, so fills switch to the 45/135 degree
+ * hatches defined in ChartTexture. Never on by default.
+ */
+@media (forced-colors: active) {
+	.viz-fill-1 {
+		fill: url(#viz-texture-a);
+	}
+	.viz-fill-2 {
+		fill: url(#viz-texture-b);
+	}
+	.viz-fill-3 {
+		fill: url(#viz-texture-c);
+	}
+	.viz-fill-4 {
+		fill: url(#viz-texture-d);
+	}
+	.viz-forced-stroke {
+		stroke: CanvasText;
+	}
+}
+
+@media print {
+	.viz-fill-1 {
+		fill: url(#viz-texture-a);
+	}
+	.viz-fill-2 {
+		fill: url(#viz-texture-b);
+	}
+	.viz-fill-3 {
+		fill: url(#viz-texture-c);
+	}
+	.viz-fill-4 {
+		fill: url(#viz-texture-d);
+	}
+	/* A printed chart has no hover layer, so the table twin always shows. */
+	.viz-table-collapsed {
+		position: static !important;
+		width: auto !important;
+		height: auto !important;
+		margin: 0 !important;
+		overflow: visible !important;
+		clip: auto !important;
+		clip-path: none !important;
+		white-space: normal !important;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.viz-root *,
+	.viz-root *::before,
+	.viz-root *::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+}

@@ -1,125 +1,200 @@
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useCallback } from 'react';
+import { Info } from 'lucide-react';
+import { FunnelChart, Meter, ShareBar } from '@/components/charts';
 import { analyticsGetService } from '@/services/analytics/GET/analytics.service.get';
-import type { IConversionReport } from '@/services/analytics/models/analytics.interface';
 import StatTile from './StatTile';
-import { formatCompactNumber, formatCurrency, formatPercent } from './utils/format';
+import MetricCard from './components/MetricCard';
+import {
+	AnalyticsError,
+	AnalyticsLoading,
+	StatTileGroup,
+} from './components/AnalyticsStates';
+import { useAnalyticsResource } from './hooks/useAnalyticsResource';
+import type { IAnalyticsViewProps } from './models/analytics-view-props.interface';
+import { scopeKindOf } from './utils/analytics-scope';
+import { describeRange } from './utils/analytics-range';
+import {
+	formatCurrency,
+	formatInteger,
+	formatPercent,
+} from './utils/format';
 
-const AnalyticsConversion = () => {
-	const [loading, setLoading] = useState(true);
-	const [data, setData] = useState<IConversionReport | null>(null);
+const AnalyticsConversion = ({ range }: IAnalyticsViewProps) => {
+	const load = useCallback(
+		() =>
+			analyticsGetService.getConversion({
+				dateFrom: range.dateFrom,
+				dateTo: range.dateTo,
+				timezone: range.timezone,
+			}),
+		[range.dateFrom, range.dateTo, range.timezone]
+	);
 
-	const getData = async () => {
-		setLoading(true);
-		try {
-			const result = await analyticsGetService.getConversion();
-			setData(result);
-		} catch (error) {
-			console.error('Error fetching conversion analytics:', error);
-			toast.error('No se pudo cargar la conversión.');
-		} finally {
-			setLoading(false);
-		}
-	};
+	const conversion = useAnalyticsResource(load);
 
-	useEffect(() => {
-		getData();
-	}, []);
-
-	if (loading) {
+	if (conversion.status === 'loading') {
 		return (
-			<div className='grid grid-cols-2 md:grid-cols-3 gap-4 p-4'>
-				{Array.from({ length: 6 }).map((_, index) => (
-					<Skeleton key={index} className='h-24 w-full rounded-xl' />
-				))}
-			</div>
+			<AnalyticsLoading tiles={3} label='Cargando la conversión…' />
 		);
 	}
 
-	if (!data) {
+	if (conversion.status === 'error' || !conversion.data) {
 		return (
-			<div className='w-full p-8 text-center text-sm text-aromas_gray_text/70'>
-				No se pudo cargar la conversión.
-			</div>
+			<AnalyticsError
+				message='No pudimos cargar las métricas de conversión.'
+				onRetry={conversion.retry}
+			/>
 		);
 	}
 
-	const { carts, orders, lifetime } = data;
+	const { carts, orders, lifetime } = conversion.data;
+	const isStale = conversion.status === 'refreshing';
 
 	return (
-		<div className='w-full flex flex-col gap-4 p-4'>
-			<Card>
-				<CardHeader>
-					<CardTitle>Carritos (instantánea)</CardTitle>
-				</CardHeader>
-				<CardContent className='flex flex-col gap-4'>
-					<div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
+		<div className='flex flex-col gap-4'>
+			{/*
+			 * Said before any number is shown: the three blocks below measure
+			 * three different windows, and the backend is explicit that no
+			 * single period-scoped conversion rate is defensible in this
+			 * schema. Presenting them as one funnel would invent a metric.
+			 */}
+			<p className='flex items-start gap-2 rounded-xl border border-aromas_gray_line bg-white p-4 text-sm text-aromas_ink_muted shadow-sm'>
+				<Info
+					aria-hidden='true'
+					className='mt-0.5 size-4 shrink-0 text-aromas_fucsia_ink'
+				/>
+				<span>
+					Cada bloque mide una ventana distinta, y la etiqueta de cada
+					tarjeta lo aclara: los carritos son una foto de ahora, las
+					órdenes corresponden al período elegido y la tasa de
+					conversión es histórica. No hay una única tasa comparable
+					entre las tres.
+				</span>
+			</p>
+
+			<MetricCard
+				title='Carritos'
+				description={carts.note}
+				scope={scopeKindOf(carts.scope)}>
+				<div className='flex flex-col gap-5'>
+					<StatTileGroup>
 						<StatTile
 							label='Carritos con items'
-							value={formatCompactNumber(carts.cartsWithItems)}
+							value={formatInteger(carts.cartsWithItems)}
+							scope='snapshot'
 						/>
 						<StatTile
 							label='Carritos abandonados'
-							value={formatCompactNumber(carts.abandonedCarts)}
-							hint={`Sin actividad ${carts.abandonedAfterHours}h`}
+							value={formatInteger(carts.abandonedCarts)}
+							hint={`Sin actividad por más de ${carts.abandonedAfterHours} h.`}
+							scope='snapshot'
 						/>
 						<StatTile
 							label='Valor abandonado'
-							value={formatCurrency(carts.abandonedValueAtCartPrices)}
+							value={formatCurrency(
+								carts.abandonedValueAtCartPrices
+							)}
+							hint='A los precios guardados en el carrito.'
+							scope='snapshot'
 						/>
-					</div>
-					<span className='text-xs text-aromas_gray_text/70'>
-						{carts.note}
-					</span>
-				</CardContent>
-			</Card>
+					</StatTileGroup>
 
-			<Card>
-				<CardHeader>
-					<CardTitle>Órdenes en el rango</CardTitle>
-				</CardHeader>
-				<CardContent className='grid grid-cols-2 md:grid-cols-3 gap-4'>
-					<StatTile
-						label='Órdenes'
-						value={formatCompactNumber(orders.ordersInRange)}
+					<Meter
+						label='Carritos abandonados sobre el total con items'
+						value={carts.abandonedCarts}
+						max={carts.cartsWithItems}
+						valueText={`${formatInteger(
+							carts.abandonedCarts
+						)} de ${formatInteger(carts.cartsWithItems)} carritos`}
+						status={
+							carts.cartsWithItems > 0 &&
+							carts.abandonedCarts / carts.cartsWithItems > 0.5
+								? 'critical'
+								: carts.abandonedCarts > 0
+									? 'warning'
+									: 'good'
+						}
+						hint='Si este número es alto, el problema está en el checkout, no en el catálogo.'
 					/>
-					<StatTile
-						label='De clientes'
-						value={formatCompactNumber(orders.customerOrdersInRange)}
-					/>
-					<StatTile
-						label='Anónimas'
-						value={formatCompactNumber(orders.anonymousOrdersInRange)}
-					/>
-				</CardContent>
-			</Card>
+				</div>
+			</MetricCard>
 
-			<Card>
-				<CardHeader>
-					<CardTitle>Histórico (agregar al carrito → venta)</CardTitle>
-				</CardHeader>
-				<CardContent className='flex flex-col gap-4'>
-					<div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
-						<StatTile
-							label='Agregados al carrito'
-							value={formatCompactNumber(lifetime.addToCartEvents)}
-						/>
-						<StatTile
-							label='Unidades vendidas'
-							value={formatCompactNumber(lifetime.soldUnits)}
-						/>
-						<StatTile
-							label='Tasa de conversión'
-							value={formatPercent(lifetime.addToCartToSaleRate)}
-						/>
-					</div>
-					<span className='text-xs text-aromas_gray_text/70'>
-						{lifetime.note}
-					</span>
-				</CardContent>
-			</Card>
+			{/*
+			 * The total lives in the card description rather than in a tile of
+			 * its own: a lone tile in a three-column row left two thirds of the
+			 * card empty, and the number is already the sum of the two segments
+			 * right below it.
+			 */}
+			<MetricCard
+				title='Órdenes del período'
+				description={`${formatInteger(
+					orders.ordersInRange
+				)} órdenes entre ${describeRange(range)}.`}
+				scope={scopeKindOf(orders.scope)}>
+				<div className='flex flex-col gap-5'>
+					<ShareBar
+						title='Órdenes por tipo de comprador'
+						segments={[
+							{
+								key: 'customers',
+								label: 'De clientes registrados',
+								value: orders.customerOrdersInRange,
+							},
+							{
+								key: 'anonymous',
+								label: 'Anónimas',
+								value: orders.anonymousOrdersInRange,
+							},
+						]}
+						valueLabel='Órdenes'
+						categoryLabel='Tipo de comprador'
+						formatValue={formatInteger}
+						summary={`De las ${formatInteger(
+							orders.ordersInRange
+						)} órdenes del período, ${formatInteger(
+							orders.customerOrdersInRange
+						)} son de clientes registrados y ${formatInteger(
+							orders.anonymousOrdersInRange
+						)} anónimas.`}
+						emptyMessage='Todavía no hay órdenes en este período.'
+						isStale={isStale}
+					/>
+				</div>
+			</MetricCard>
+
+			<MetricCard
+				title='Del carrito a la venta'
+				description={`Tasa histórica: ${formatPercent(
+					lifetime.addToCartToSaleRate
+				)}. ${lifetime.note}`}
+				scope={scopeKindOf(lifetime.scope)}>
+				<FunnelChart
+						title='Embudo histórico: agregados al carrito y unidades vendidas'
+						description='Contadores acumulados desde el inicio: no se filtran por período.'
+						stages={[
+							{
+								key: 'addToCart',
+								label: 'Agregados al carrito',
+								value: lifetime.addToCartEvents,
+							},
+							{
+								key: 'sold',
+								label: 'Unidades vendidas',
+								value: lifetime.soldUnits,
+							},
+						]}
+						valueLabel='Eventos'
+						formatValue={formatInteger}
+						summary={`De ${formatInteger(
+							lifetime.addToCartEvents
+						)} agregados al carrito acumulados se vendieron ${formatInteger(
+							lifetime.soldUnits
+						)} unidades: una tasa de ${formatPercent(
+							lifetime.addToCartToSaleRate
+						)}.`}
+					isStale={isStale}
+				/>
+			</MetricCard>
 		</div>
 	);
 };

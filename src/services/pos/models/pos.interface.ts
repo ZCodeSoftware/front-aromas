@@ -1,4 +1,4 @@
-import type { IOrderStatus } from '@/services/order/models/order.interface';
+import type { IOrderStatusCode } from '@/services/order/models/order.interface';
 
 export interface IPosSaleItemPayload {
 	productId: string;
@@ -22,7 +22,8 @@ export interface ICreatePosSalePayload {
 export interface IPosSaleFilters {
 	page?: number;
 	limit?: number;
-	status?: IOrderStatus;
+	/** The API filters by code, not by the id of the catalogue row. */
+	status?: IOrderStatusCode;
 	dateFrom?: string;
 	dateTo?: string;
 	soldBy?: string;

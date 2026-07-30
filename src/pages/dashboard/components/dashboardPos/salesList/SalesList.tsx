@@ -52,17 +52,21 @@ const summarizeItems = (sale: IOrder) =>
 const SalesList = () => {
 	const [loading, setLoading] = useState(true);
 	const [sales, setSales] = useState<IOrder[]>([]);
+	const [failed, setFailed] = useState(false);
 	const [refundingId, setRefundingId] = useState<string | null>(null);
 
 	const getData = async () => {
 		setLoading(true);
+		setFailed(false);
 		try {
 			const result = await posGetService.getSales();
-			if (result?.data) {
-				setSales(result.data);
-			}
+			// Falling back to an empty list keeps a malformed response from
+			// leaving the rows of the previous load on screen.
+			setSales(result?.data ?? []);
 		} catch (error) {
 			console.error('Error fetching POS sales:', error);
+			setSales([]);
+			setFailed(true);
 			toast.error('No se pudieron cargar las ventas.');
 		} finally {
 			setLoading(false);
@@ -75,15 +79,20 @@ const SalesList = () => {
 
 	const handleRefund = async (sale: IOrder) => {
 		const confirmed = window.confirm(
-			`¿Seguro que querés reembolsar la venta #${sale._id.slice(-6).toUpperCase()}?`
+			`¿Seguro que querés reembolsar la venta #${sale.orderNumber}?`
 		);
 		if (!confirmed) return;
 
 		setRefundingId(sale._id);
 		try {
-			await posPatchService.refundSale(sale._id);
+			const refundedSale = await posPatchService.refundSale(sale._id);
+			// The endpoint returns the updated sale, so the row is patched in
+			// place. Re-listing instead could fail after a refund that already
+			// went through, leaving a refunded sale still offering the button.
+			setSales((prev) =>
+				prev.map((s) => (s._id === sale._id ? refundedSale : s))
+			);
 			toast.success('Venta reembolsada con éxito.');
-			getData();
 		} catch (error) {
 			toast.error(
 				getApiErrorMessage(error, 'No se pudo reembolsar la venta.')
@@ -99,7 +108,7 @@ const SalesList = () => {
 
 	return (
 		<div className='w-full p-4'>
-			<Table>
+			<Table data-tutorial='sales-table'>
 				<TableHeader>
 					<TableRow>
 						<TableHead>Fecha</TableHead>
@@ -110,38 +119,72 @@ const SalesList = () => {
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{sales.map((sale) => (
-						<TableRow key={sale._id}>
-							<TableCell className='font-medium'>
-								{formatDate(sale.createdAt)}
-							</TableCell>
-							<TableCell className='max-w-xs truncate'>
-								{summarizeItems(sale)}
-							</TableCell>
-							<TableCell className='text-right'>
-								${sale.totalPrice.toFixed(2)}
-							</TableCell>
-							<TableCell className='text-center'>
-								<Badge variant={STATUS_VARIANTS[sale.status]}>
-									{STATUS_LABELS[sale.status] ?? sale.status}
-								</Badge>
-							</TableCell>
-							<TableCell className='text-right'>
-								{(sale.status as string) !== 'REFUNDED' && (
-									<Button
-										variant='outline'
-										size='sm'
-										disabled={refundingId === sale._id}
-										onClick={() => handleRefund(sale)}
-										className='border-red-600 text-red-600'>
-										{refundingId === sale._id
-											? 'Reembolsando...'
-											: 'Reembolsar'}
-									</Button>
-								)}
+					{failed && (
+						<TableRow>
+							<TableCell
+								colSpan={5}
+								className='text-center text-aromas_gray_text'>
+								<span className='mr-3'>
+									No se pudieron cargar las ventas.
+								</span>
+								<Button
+									variant='outline'
+									size='sm'
+									onClick={getData}>
+									Reintentar
+								</Button>
 							</TableCell>
 						</TableRow>
-					))}
+					)}
+					{!failed && sales.length === 0 && (
+						<TableRow>
+							<TableCell
+								colSpan={5}
+								className='text-center text-aromas_gray_text'>
+								Todavía no hay ventas registradas.
+							</TableCell>
+						</TableRow>
+					)}
+					{sales.map((sale) => {
+						// `status` arrives as the populated catalogue row, so the
+						// labels and the refund guard both read its code.
+						const statusCode = sale.status?.code;
+						return (
+							<TableRow key={sale._id}>
+								<TableCell className='font-medium'>
+									{formatDate(sale.createdAt)}
+								</TableCell>
+								<TableCell className='max-w-xs truncate'>
+									{summarizeItems(sale)}
+								</TableCell>
+								<TableCell className='text-right'>
+									${sale.totalPrice.toFixed(2)}
+								</TableCell>
+								<TableCell className='text-center'>
+									<Badge
+										variant={STATUS_VARIANTS[statusCode]}>
+										{STATUS_LABELS[statusCode] ??
+											sale.status?.name ??
+											'Sin estado'}
+									</Badge>
+								</TableCell>
+								<TableCell className='text-right'>
+									{statusCode !== 'REFUNDED' && (
+										<Button
+											variant='outline'
+											size='sm'
+											disabled={refundingId === sale._id}
+											onClick={() => handleRefund(sale)}
+											className='border-red-600 text-red-600'>
+											{refundingId === sale._id
+												? 'Reembolsando...'
+												: 'Reembolsar'}
+										</Button>
+									)}
+								</TableCell>
+							</TableRow>
+						);
+					})}
 				</TableBody>
 			</Table>
 		</div>

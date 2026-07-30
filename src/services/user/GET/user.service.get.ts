@@ -11,6 +11,15 @@ const getAllUsers = async (): Promise<IUserProfile[]> => {
 	return response.data;
 };
 
+/**
+ * Admin listing: the same users as `getAllUsers` plus the deactivated ones, so the
+ * dashboard can reactivate them.
+ */
+const getAllUsersIncludingInactive = async (): Promise<IUserProfile[]> => {
+	const response = await AppApiGateWay.get('/user/all');
+	return response.data;
+};
+
 const getUserById = async (id: string): Promise<IUserProfile> => {
 	const response = await AppApiGateWay.get(`/user/${id}`);
 	return response.data;
@@ -19,5 +28,6 @@ const getUserById = async (id: string): Promise<IUserProfile> => {
 export const userGetService = {
 	getMyProfile,
 	getAllUsers,
+	getAllUsersIncludingInactive,
 	getUserById,
 };

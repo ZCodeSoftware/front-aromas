@@ -226,7 +226,7 @@ const CreateProduct: React.FC = () => {
 			</CardHeader>
 			<CardContent>
 				<form onSubmit={handleSubmit} className='space-y-6'>
-					<div className='grid gap-1.5'>
+					<div data-tutorial='product-name' className='grid gap-1.5'>
 						<label htmlFor='name'>Nombre del Producto</label>
 						<Input
 							id='name'
@@ -269,7 +269,7 @@ const CreateProduct: React.FC = () => {
 						)}
 					</div>
 					<div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-						<div className='grid gap-1.5'>
+						<div data-tutorial='product-category' className='grid gap-1.5'>
 							<label htmlFor='category'>Categoría</label>
 							<Select
 								onValueChange={handleCategoryChange}
@@ -433,7 +433,9 @@ const CreateProduct: React.FC = () => {
 							</Select>
 						</div>
 					</div>
-					<div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+					<div
+						data-tutorial='product-price'
+						className='grid grid-cols-1 md:grid-cols-2 gap-6'>
 						<div className='grid gap-1.5'>
 							<label htmlFor='price'>Precio</label>
 							<Input
@@ -479,7 +481,9 @@ const CreateProduct: React.FC = () => {
 							)}
 						</div>
 					</div>
-					<div className='w-full flex justify-center'>
+					<div
+						data-tutorial='product-upload'
+						className='w-full flex justify-center'>
 						<UploadImage
 							setUrl={setImageFiles}
 							form={product}
@@ -490,6 +494,7 @@ const CreateProduct: React.FC = () => {
 					<div className='w-full flex justify-center'>
 						<Button
 							type='submit'
+							data-tutorial='product-submit'
 							className='w-3/12 bg-aromas_pink text-aromas_gray_text'
 							disabled={submitDisable || buttonLoading}>
 							{buttonLoading && (

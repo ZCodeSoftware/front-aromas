@@ -3,4 +3,5 @@ import type { ISubCategory } from '../../sub-categories/models/sub-categories.in
 
 export interface ICategory extends IBaseItem {
 	subCategories: ISubCategory[];
+	isActive: boolean;
 }

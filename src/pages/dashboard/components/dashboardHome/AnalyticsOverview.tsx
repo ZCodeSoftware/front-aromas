@@ -1,17 +1,41 @@
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
+import { useCallback, useMemo, useState } from 'react';
+import { cn } from '@/lib/utils';
+import {
+	ColumnChart,
+	LineAreaChart,
+	RankedBarChart,
+	ShareBar,
+} from '@/components/charts';
 import { analyticsGetService } from '@/services/analytics/GET/analytics.service.get';
-import type {
-	IDashboard,
-	IGroupBy,
-	ISalesTimeSeries,
-} from '@/services/analytics/models/analytics.interface';
+import type { IGroupBy } from '@/services/analytics/models/analytics.interface';
 import StatTile from './StatTile';
-import SalesTimeseriesChart from './SalesTimeseriesChart';
-import { formatCompactNumber, formatCurrency } from './utils/format';
+import MetricCard from './components/MetricCard';
+import {
+	AnalyticsError,
+	AnalyticsLoading,
+	StatTileGroup,
+} from './components/AnalyticsStates';
+import { useAnalyticsResource } from './hooks/useAnalyticsResource';
+import type { IAnalyticsViewProps } from './models/analytics-view-props.interface';
+import {
+	ORDER_STATUS_LABELS,
+	labelFor,
+	percentChange,
+	scopeKindOf,
+} from './utils/analytics-scope';
+import {
+	describeRange,
+	previousPeriod,
+	suggestedGroupBy,
+} from './utils/analytics-range';
+import {
+	formatBucketLabel,
+	formatCompactNumber,
+	formatCurrency,
+	formatCurrencyCompact,
+	formatInteger,
+	formatUnits,
+} from './utils/format';
 
 const GROUP_BY_OPTIONS: { value: IGroupBy; label: string }[] = [
 	{ value: 'day', label: 'Día' },
@@ -19,233 +43,355 @@ const GROUP_BY_OPTIONS: { value: IGroupBy; label: string }[] = [
 	{ value: 'month', label: 'Mes' },
 ];
 
-const ORDER_STATUS_LABELS: Record<string, string> = {
-	PENDING: 'Pendiente',
-	PAID: 'Pagado',
-	SHIPPED: 'Enviado',
-	DELIVERED: 'Entregado',
-	CANCELLED: 'Cancelado',
-	REFUNDED: 'Reembolsado',
-};
+const COMPARISON_LABEL = 'vs. período anterior';
 
-const AnalyticsOverview = () => {
-	const [loading, setLoading] = useState(true);
-	const [dashboard, setDashboard] = useState<IDashboard | null>(null);
-	const [timeseries, setTimeseries] = useState<ISalesTimeSeries | null>(null);
-	const [timeseriesLoading, setTimeseriesLoading] = useState(true);
-	const [groupBy, setGroupBy] = useState<IGroupBy>('day');
+const AnalyticsOverview = ({ range }: IAnalyticsViewProps) => {
+	/*
+	 * Null means "follow the period": a 12-month window bucketed by day is 365
+	 * columns nobody can read. An explicit choice wins and then sticks, because
+	 * overriding a reader's own click on the next refilter is worse than a
+	 * chart they have to re-coarsen.
+	 */
+	const [groupByOverride, setGroupByOverride] = useState<IGroupBy | null>(
+		null
+	);
+	const groupBy = groupByOverride ?? suggestedGroupBy(range);
+	const comparison = useMemo(() => previousPeriod(range), [range]);
 
-	const getDashboard = async () => {
-		setLoading(true);
-		try {
-			const result = await analyticsGetService.getDashboard();
-			setDashboard(result);
-		} catch (error) {
-			console.error('Error fetching analytics dashboard:', error);
-			toast.error('No se pudieron cargar las métricas del panel.');
-		} finally {
-			setLoading(false);
-		}
-	};
+	const loadDashboard = useCallback(
+		() =>
+			analyticsGetService.getDashboard({
+				dateFrom: range.dateFrom,
+				dateTo: range.dateTo,
+				timezone: range.timezone,
+			}),
+		[range.dateFrom, range.dateTo, range.timezone]
+	);
 
-	const getTimeseries = async (nextGroupBy: IGroupBy) => {
-		setTimeseriesLoading(true);
-		try {
-			const result = await analyticsGetService.getSalesTimeseries({
-				groupBy: nextGroupBy,
-			});
-			setTimeseries(result);
-		} catch (error) {
-			console.error('Error fetching sales timeseries:', error);
-			toast.error('No se pudo cargar la serie de ventas.');
-		} finally {
-			setTimeseriesLoading(false);
-		}
-	};
+	const loadPrevious = useCallback(
+		() =>
+			analyticsGetService.getDashboard({
+				dateFrom: comparison.dateFrom,
+				dateTo: comparison.dateTo,
+				timezone: comparison.timezone,
+			}),
+		[comparison.dateFrom, comparison.dateTo, comparison.timezone]
+	);
 
-	useEffect(() => {
-		getDashboard();
-	}, []);
+	const loadTimeseries = useCallback(
+		() =>
+			analyticsGetService.getSalesTimeseries({
+				dateFrom: range.dateFrom,
+				dateTo: range.dateTo,
+				timezone: range.timezone,
+				groupBy,
+			}),
+		[range.dateFrom, range.dateTo, range.timezone, groupBy]
+	);
 
-	useEffect(() => {
-		getTimeseries(groupBy);
-	}, [groupBy]);
+	const dashboard = useAnalyticsResource(loadDashboard);
+	const previous = useAnalyticsResource(loadPrevious);
+	const timeseries = useAnalyticsResource(loadTimeseries);
 
-	if (loading) {
+	if (dashboard.status === 'loading') {
+		return <AnalyticsLoading label='Cargando el resumen del negocio…' />;
+	}
+
+	if (dashboard.status === 'error' || !dashboard.data) {
 		return (
-			<div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 p-4'>
-				{Array.from({ length: 6 }).map((_, index) => (
-					<Skeleton key={index} className='h-24 w-full rounded-xl' />
-				))}
-			</div>
+			<AnalyticsError
+				message='No pudimos cargar el resumen del negocio.'
+				onRetry={dashboard.retry}
+			/>
 		);
 	}
 
-	if (!dashboard) {
-		return (
-			<div className='w-full p-8 text-center text-sm text-aromas_gray_text/70'>
-				No se pudieron cargar las métricas del panel.
-			</div>
-		);
-	}
+	const { sales, catalogue, engagement } = dashboard.data;
+	const points = timeseries.data?.points ?? [];
+	const isStale = dashboard.status === 'refreshing';
+	const engagementScope = scopeKindOf(engagement.scope);
 
-	const { sales, catalogue, engagement, range } = dashboard;
+	/*
+	 * Deltas are only shown once the comparison window has actually landed —
+	 * a tile that renders "+0%" while its base is still in flight is a lie
+	 * with a number in it.
+	 */
+	const deltaFor = (
+		current: number,
+		pick: (data: NonNullable<typeof previous.data>) => number
+	) =>
+		previous.status === 'ready' && previous.data
+			? {
+					percent: percentChange(current, pick(previous.data)),
+					comparisonLabel: COMPARISON_LABEL,
+				}
+			: undefined;
 
 	return (
-		<div className='w-full flex flex-col gap-4 p-4'>
-			<span className='text-xs text-aromas_gray_text/70'>
-				{range
-					? `Rango: ${range.dateFrom} a ${range.dateTo} (${range.timezone})`
-					: 'Histórico completo'}
-			</span>
-
-			<div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4'>
+		<div className='flex flex-col gap-4'>
+			{/*
+			 * The hero takes its own row and the five supporting figures share
+			 * the next one: spanning the hero across a four-column grid left a
+			 * hole at the end of the second row, which reads as a missing tile.
+			 */}
+			<StatTileGroup className='xl:grid-cols-5'>
 				<StatTile
+					isHero
 					label='Ingresos'
 					value={formatCurrency(sales.revenue)}
+					hint='Toda orden no cancelada ni reembolsada, pendientes incluidas.'
+					scope='range'
+					trend={points.map((point) => point.revenue)}
+					delta={deltaFor(sales.revenue, (data) => data.sales.revenue)}
 				/>
 				<StatTile
 					label='Ingresos cobrados'
 					value={formatCurrency(sales.paidRevenue)}
+					hint='Dinero efectivamente tomado.'
+					scope='range'
+					trend={points.map((point) => point.paidRevenue)}
+					delta={deltaFor(
+						sales.paidRevenue,
+						(data) => data.sales.paidRevenue
+					)}
 				/>
 				<StatTile
 					label='Órdenes'
-					value={formatCompactNumber(sales.totalOrders)}
+					value={formatInteger(sales.totalOrders)}
+					scope='range'
+					trend={points.map((point) => point.orders)}
+					delta={deltaFor(
+						sales.totalOrders,
+						(data) => data.sales.totalOrders
+					)}
 				/>
 				<StatTile
 					label='Órdenes pagadas'
-					value={formatCompactNumber(sales.paidOrders)}
+					value={formatInteger(sales.paidOrders)}
+					scope='range'
+					trend={points.map((point) => point.paidOrders)}
+					delta={deltaFor(
+						sales.paidOrders,
+						(data) => data.sales.paidOrders
+					)}
 				/>
 				<StatTile
 					label='Productos'
-					value={formatCompactNumber(catalogue.totalProducts)}
+					value={formatInteger(catalogue.totalProducts)}
+					scope='lifetime'
+					hint='El catálogo no se filtra por período.'
 				/>
 				<StatTile
 					label='Usuarios'
-					value={formatCompactNumber(catalogue.totalUsers)}
+					value={formatInteger(catalogue.totalUsers)}
+					scope='lifetime'
+					hint='Los usuarios no se filtran por período.'
 				/>
-			</div>
+			</StatTileGroup>
 
-			<Card>
-				<CardHeader className='flex flex-row items-center justify-between'>
-					<CardTitle>Ventas en el tiempo</CardTitle>
-					<div className='flex items-center gap-2'>
-						{GROUP_BY_OPTIONS.map((option) => (
-							<Button
-								key={option.value}
-								size='sm'
-								className={`text-aromas_fucsia border border-aromas_fucsia ${
-									groupBy === option.value
-										? 'bg-aromas_pink text-aromas_gray_text'
-										: ''
-								}`}
-								onClick={() => setGroupBy(option.value)}>
-								{option.label}
-							</Button>
-						))}
-					</div>
-				</CardHeader>
-				<CardContent>
-					{timeseriesLoading || !timeseries ? (
-						<Skeleton className='h-56 w-full' />
-					) : (
-						<SalesTimeseriesChart points={timeseries.points} />
+			<MetricCard
+				title='Ventas en el tiempo'
+				description={`Ingresos por ${
+					groupBy === 'day' ? 'día' : groupBy === 'week' ? 'semana' : 'mes'
+				} entre ${describeRange(range)}.`}
+				scope='range'
+				action={
+					<fieldset
+						data-tutorial='home-groupby'
+						className='flex flex-col gap-1'>
+						<legend className='sr-only'>
+							Agrupar el gráfico de ventas por
+						</legend>
+						<div className='flex flex-wrap gap-1.5'>
+							{GROUP_BY_OPTIONS.map((option) => (
+								<label key={option.value} className='cursor-pointer'>
+									<input
+										type='radio'
+										name='overview-group-by'
+										value={option.value}
+										checked={groupBy === option.value}
+										onChange={() =>
+											setGroupByOverride(option.value)
+										}
+										className='peer sr-only'
+									/>
+									<span
+										className={cn(
+											'inline-flex min-h-[32px] items-center rounded-full border border-aromas_fucsia_ink px-3 py-1 text-xs font-medium text-aromas_fucsia_ink',
+											'peer-hover:bg-aromas_fucsia_ink/10',
+											'peer-checked:bg-aromas_pink peer-checked:text-aromas_gray_text',
+											'peer-focus-visible:ring-2 peer-focus-visible:ring-aromas_fucsia_ink peer-focus-visible:ring-offset-2'
+										)}>
+										{option.label}
+									</span>
+								</label>
+							))}
+						</div>
+					</fieldset>
+				}>
+				{timeseries.status === 'error' ? (
+					<AnalyticsError
+						message='No pudimos cargar la serie de ventas.'
+						onRetry={timeseries.retry}
+					/>
+				) : (
+					<ColumnChart
+						title='Ingresos por período'
+						description='Las columnas más claras son períodos que se extienden fuera del rango elegido.'
+						points={points.map((point) => ({
+							key: point.bucket,
+							label: formatBucketLabel(point.bucket, groupBy),
+							value: point.revenue,
+							isPartial: point.partial,
+							detail: [
+								{
+									label: 'Órdenes',
+									value: formatInteger(point.orders),
+								},
+								{
+									label: 'Cobrado',
+									value: formatCurrency(point.paidRevenue),
+								},
+							],
+						}))}
+						valueLabel='Ingresos'
+						categoryLabel='Período'
+						formatValue={formatCurrency}
+						formatTick={formatCurrencyCompact}
+						summary={`Ingresos por período entre ${describeRange(range)}. ${
+							points.length
+						} períodos, con un total de ${formatCurrency(
+							timeseries.data?.totals.revenue ?? 0
+						)}.`}
+						isStale={timeseries.status === 'refreshing'}
+					/>
+				)}
+			</MetricCard>
+
+			<MetricCard
+				title='Ticket promedio'
+				description='Cuánto deja cada orden. Dos medidas de la misma escala, en un solo eje.'
+				scope='range'>
+				<LineAreaChart
+					title='Ticket promedio por período'
+					labels={points.map((point) =>
+						formatBucketLabel(point.bucket, groupBy)
 					)}
-				</CardContent>
-			</Card>
+					series={[
+						{
+							key: 'avgTicket',
+							name: 'Todas las órdenes',
+							values: points.map((point) => point.avgTicket),
+						},
+						{
+							key: 'paidAvgTicket',
+							name: 'Sólo cobradas',
+							values: points.map((point) => point.paidAvgTicket),
+						},
+					]}
+					categoryLabel='Período'
+					formatValue={formatCurrency}
+					formatTick={formatCurrencyCompact}
+					summary={`Ticket promedio por período entre ${describeRange(
+						range
+					)}. Promedio del período: ${formatCurrency(
+						timeseries.data?.totals.avgTicket ?? 0
+					)}.`}
+					isStale={timeseries.status === 'refreshing'}
+				/>
+			</MetricCard>
 
-			<div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-				<Card>
-					<CardHeader>
-						<CardTitle>Más vistos</CardTitle>
-					</CardHeader>
-					<CardContent className='flex flex-col gap-2'>
-						{engagement.topViewed.length === 0 && (
-							<span className='text-sm text-aromas_gray_text/70'>
-								Sin datos.
-							</span>
-						)}
-						{engagement.topViewed.map((item) => (
-							<div
-								key={item.product._id}
-								className='flex items-center justify-between text-sm'>
-								<span>{item.product.name ?? item.product._id}</span>
-								<span className='font-medium'>
-									{formatCompactNumber(item.value)}
-								</span>
-							</div>
-						))}
-					</CardContent>
-				</Card>
+			<div className='grid grid-cols-1 gap-4 xl:grid-cols-2'>
+				<MetricCard
+					title='Órdenes por estado'
+					description='Cómo se reparten las órdenes del período.'
+					scope='range'>
+					<ShareBar
+						title='Reparto de órdenes por estado'
+						segments={sales.ordersByStatus.map((row) => ({
+							key: row.status,
+							label: labelFor(ORDER_STATUS_LABELS, row.status),
+							value: row.count,
+						}))}
+						valueLabel='Órdenes'
+						categoryLabel='Estado'
+						formatValue={formatInteger}
+						summary={`Reparto de las ${formatInteger(
+							sales.totalOrders
+						)} órdenes del período por estado.`}
+						emptyMessage='Todavía no hay órdenes en este período.'
+						isStale={isStale}
+					/>
+				</MetricCard>
 
-				<Card>
-					<CardHeader>
-						<CardTitle>Más agregados al carrito</CardTitle>
-					</CardHeader>
-					<CardContent className='flex flex-col gap-2'>
-						{engagement.topAddedToCart.length === 0 && (
-							<span className='text-sm text-aromas_gray_text/70'>
-								Sin datos.
-							</span>
-						)}
-						{engagement.topAddedToCart.map((item) => (
-							<div
-								key={item.product._id}
-								className='flex items-center justify-between text-sm'>
-								<span>{item.product.name ?? item.product._id}</span>
-								<span className='font-medium'>
-									{formatCompactNumber(item.value)}
-								</span>
-							</div>
-						))}
-					</CardContent>
-				</Card>
-			</div>
+				<MetricCard
+					title='Más vendidos'
+					description='Unidades despachadas en el período.'
+					scope='range'>
+					<RankedBarChart
+						title='Productos más vendidos'
+						items={sales.topSold.map((item) => ({
+							key: item.product._id,
+							label: item.name,
+							value: item.quantity,
+							secondary: {
+								label: 'Ingresos',
+								value: formatCurrency(item.revenue),
+							},
+						}))}
+						valueLabel='Unidades'
+						categoryLabel='Producto'
+						formatValue={formatUnits}
+						formatTick={formatInteger}
+						summary={`Ranking de productos por unidades vendidas entre ${describeRange(
+							range
+						)}.`}
+						emptyMessage='Todavía no se vendió nada en este período.'
+						isStale={isStale}
+					/>
+				</MetricCard>
 
-			<div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-				<Card>
-					<CardHeader>
-						<CardTitle>Órdenes por estado</CardTitle>
-					</CardHeader>
-					<CardContent className='flex flex-col gap-2'>
-						{sales.ordersByStatus.map((row) => (
-							<div
-								key={row.status}
-								className='flex items-center justify-between text-sm'>
-								<span>
-									{ORDER_STATUS_LABELS[row.status] ??
-										row.status}
-								</span>
-								<span className='font-medium'>
-									{formatCompactNumber(row.count)}
-								</span>
-							</div>
-						))}
-					</CardContent>
-				</Card>
+				<MetricCard
+					title='Más vistos'
+					description='Contadores acumulados por producto. No se filtran por período.'
+					scope={engagementScope}>
+					<RankedBarChart
+						title='Productos más vistos'
+						items={engagement.topViewed.map((item) => ({
+							key: item.product._id,
+							label: item.product.name ?? item.product._id,
+							value: item.value,
+						}))}
+						valueLabel='Vistas'
+						categoryLabel='Producto'
+						formatValue={formatInteger}
+						formatTick={formatCompactNumber}
+						summary='Ranking histórico de productos por cantidad de vistas.'
+						emptyMessage='Todavía no hay vistas registradas.'
+						isStale={isStale}
+					/>
+				</MetricCard>
 
-				<Card>
-					<CardHeader>
-						<CardTitle>Más vendidos</CardTitle>
-					</CardHeader>
-					<CardContent className='flex flex-col gap-2'>
-						{sales.topSold.length === 0 && (
-							<span className='text-sm text-aromas_gray_text/70'>
-								Sin datos.
-							</span>
-						)}
-						{sales.topSold.map((item) => (
-							<div
-								key={item.product._id}
-								className='flex items-center justify-between text-sm'>
-								<span>{item.name}</span>
-								<span className='font-medium'>
-									{item.quantity} u. · {formatCurrency(item.revenue)}
-								</span>
-							</div>
-						))}
-					</CardContent>
-				</Card>
+				<MetricCard
+					title='Más agregados al carrito'
+					description='Contadores acumulados por producto. No se filtran por período.'
+					scope={engagementScope}>
+					<RankedBarChart
+						title='Productos más agregados al carrito'
+						items={engagement.topAddedToCart.map((item) => ({
+							key: item.product._id,
+							label: item.product.name ?? item.product._id,
+							value: item.value,
+						}))}
+						valueLabel='Agregados'
+						categoryLabel='Producto'
+						formatValue={formatInteger}
+						formatTick={formatCompactNumber}
+						summary='Ranking histórico de productos por veces agregado al carrito.'
+						emptyMessage='Todavía no hay carritos registrados.'
+						isStale={isStale}
+					/>
+				</MetricCard>
 			</div>
 		</div>
 	);

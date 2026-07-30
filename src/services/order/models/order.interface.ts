@@ -46,6 +46,14 @@ export interface IOrderShippingAddress {
 	floorAddress?: string;
 }
 
+/** Account behind an online order, as the API populates it. */
+export interface IOrderUser {
+	_id: string;
+	firstName?: string | null;
+	lastName?: string | null;
+	email: string;
+}
+
 export interface IOrderCustomer {
 	name?: string;
 	email?: string;
@@ -55,6 +63,8 @@ export interface IOrderCustomer {
 
 export interface IOrder {
 	_id: string;
+	/** Consecutive number shown to the customer, assigned by the API. */
+	orderNumber: number;
 	items: IOrderItem[];
 	subTotalPrice: number;
 	shippingPrice: number;
@@ -64,7 +74,7 @@ export interface IOrder {
 	shippingAddress: IOrderShippingAddress | null;
 	status: IOrderStatus;
 	channel?: IOrderChannel;
-	user?: string | null;
+	user?: IOrderUser | null;
 	customer?: IOrderCustomer | null;
 	createdAt: string;
 	updatedAt: string;
