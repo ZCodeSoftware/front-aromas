@@ -1,7 +1,7 @@
 import { Mail, Instagram, Facebook, Twitter } from 'lucide-react';
 const Footer = () => {
 	return (
-		<footer className='bg-white py-8 px-16'>
+		<footer className='bg-white py-8 px-4 sm:px-8 lg:px-16'>
 			<div className='max-w-full mx-auto'>
 				<div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
 					<div className='space-y-4'>
@@ -92,7 +92,7 @@ const Footer = () => {
 									type='email'
 									id='email'
 									placeholder='tu@email.com'
-									className='flex-1 px-4 py-2 border border-aromas_fucsia rounded-l-full focus:outline-none focus:ring-1 focus:ring-gray-500'
+									className='min-w-0 flex-1 px-4 py-2 border border-aromas_fucsia rounded-l-full focus:outline-none focus:ring-1 focus:ring-gray-500'
 								/>
 								<button
 									type='submit'

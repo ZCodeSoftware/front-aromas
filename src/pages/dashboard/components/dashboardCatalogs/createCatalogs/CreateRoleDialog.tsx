@@ -102,19 +102,21 @@ const CreateRoleDialog: React.FC<CreateRoleDialogProps> = ({
 							}`}
 						/>
 						{touched && error && (
-							<p className='text-sm text-red-600 mt-1'>
-								{error}
-							</p>
+							<p className='text-sm text-red-600 mt-1'>{error}</p>
 						)}
 					</div>
 
 					<DialogFooter>
 						<DialogClose asChild>
-							<Button type='button' variant='outline'>
+							<Button
+								className='text-aromas_gray_text'
+								type='button'
+								variant='outline'>
 								Cancelar
 							</Button>
 						</DialogClose>
 						<Button
+							className='bg-aromas_pink text-aromas_gray_text'
 							type='submit'
 							disabled={submitDisable || buttonLoading}>
 							{buttonLoading && (

@@ -19,7 +19,7 @@ const Profile: React.FC<IProfileProps> = ({ onClose }) => {
 	const [currentView, setCurrentView] = useState<IProfileView>('home');
 	const [exitingView, setExitingView] = useState<IProfileView | null>(null);
 	const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
-		null
+		null,
 	);
 	const modalRef = useRef<HTMLDivElement>(null);
 
@@ -126,7 +126,7 @@ const Profile: React.FC<IProfileProps> = ({ onClose }) => {
 						<ProfileUpdateLocation
 							onNavigate={navigateTo}
 							address={profile?.address.find(
-								(addr) => addr._id === selectedAddressId
+								(addr) => addr._id === selectedAddressId,
 							)}
 							onUpdated={fetchProfile}
 						/>
@@ -201,7 +201,6 @@ const Profile: React.FC<IProfileProps> = ({ onClose }) => {
 					<div className='w-full py-4 flex items-center justify-between'>
 						{currentView === 'home' ? (
 							<div className='flex items-center gap-4 w-full'>
-								<span>Imagen</span>
 								<div className='flex flex-col'>
 									<h2 className='text-aromas_gray_text'>
 										{profileLoading

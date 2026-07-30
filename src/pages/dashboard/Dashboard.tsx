@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Menu, X } from 'lucide-react';
 import type { IDashboardItem } from './models/dashboard-items.interface';
 import DashboardHome from './components/dashboardHome/DashboardHome';
 import DashboardProducts from './components/dashboardProducts/productssList/DashboardProductsList';
@@ -6,7 +7,7 @@ import DashboardCreateProduct from './components/dashboardProducts/createProduct
 import Sidebar from './components/Sidebar';
 import DashboardCatalogsList from './components/dashboardCatalogs/catalogsList/DashboardCatalogList';
 import DashboardCreateCatalogs from './components/dashboardCatalogs/createCatalogs/DashboardCreate';
-import RolesList from './components/dashboardCatalogs/catalogsList/RolesList';
+// import RolesList from './components/dashboardCatalogs/catalogsList/RolesList';
 import UsersList from './components/dashboardUsers/usersList/UsersList';
 import OrdersList from './components/dashboardOrders/ordersList/OrdersList';
 import RegisterSale from './components/dashboardPos/registerSale/RegisterSale';
@@ -63,11 +64,11 @@ const Dashboard: React.FC = () => {
 					name: 'Lista de Usuarios',
 					component: <UsersList />,
 				},
-				{
-					id: 'role-list',
-					name: 'Roles',
-					component: <RolesList />,
-				},
+				// {
+				// 	id: 'role-list',
+				// 	name: 'Roles',
+				// 	component: <RolesList />,
+				// },
 			],
 		},
 		{
@@ -111,6 +112,12 @@ const Dashboard: React.FC = () => {
 	];
 
 	const [activePage, setActivePage] = useState<string>(dashboardItems[0].id);
+	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+	const handleSelectPage = (id: string) => {
+		setActivePage(id);
+		setIsSidebarOpen(false);
+	};
 
 	const findActiveComponent = (items: IDashboardItem[]): React.ReactNode => {
 		for (const item of items) {
@@ -120,7 +127,7 @@ const Dashboard: React.FC = () => {
 
 			if (item.subItems) {
 				const subItemComponent = item.subItems.find(
-					(subItem) => subItem.id === activePage
+					(subItem) => subItem.id === activePage,
 				)?.component;
 				if (subItemComponent) {
 					return subItemComponent;
@@ -133,9 +140,29 @@ const Dashboard: React.FC = () => {
 	const ActiveComponent = findActiveComponent(dashboardItems);
 
 	return (
-		<>
+		<div className='relative flex h-screen flex-col overflow-hidden'>
 			<Navbar />
-			<div className='flex w-full h-[93.5vh]'>
+			<div className='flex items-center gap-3 border-b bg-aromas_nav_bg p-3 lg:hidden'>
+				<button
+					type='button'
+					onClick={() => setIsSidebarOpen(true)}
+					aria-label='Abrir menú del panel'
+					aria-haspopup='dialog'
+					className='rounded-md p-1 hover:bg-black/5'>
+					<Menu className='h-6 w-6 text-aromas_gray_text' />
+				</button>
+				<span className='text-lg font-bold text-aromas_gray_text'>
+					Dashboard
+				</span>
+			</div>
+			{isSidebarOpen && (
+				<div
+					onClick={() => setIsSidebarOpen(false)}
+					aria-hidden='true'
+					className='fixed inset-0 z-30 bg-black/40 lg:hidden'
+				/>
+			)}
+			<div className='flex w-full flex-1 min-h-0'>
 				{/*
 				 * `aside`, so the sidebar is a complementary landmark rather
 				 * than page content sitting outside every landmark — which is
@@ -145,7 +172,9 @@ const Dashboard: React.FC = () => {
 				<aside
 					aria-label='Secciones del dashboard'
 					data-tutorial='dashboard-sidebar'
-					className='w-64 bg-aromas_nav_bg border-r p-4 flex flex-col overflow-y-auto'>
+					className={`fixed inset-y-0 left-0 z-40 w-64 shrink-0 -translate-x-full bg-aromas_nav_bg border-r p-4 flex flex-col overflow-y-auto transition-transform duration-300 lg:static lg:z-auto lg:translate-x-0 ${
+						isSidebarOpen ? 'translate-x-0' : ''
+					}`}>
 					<div className='mb-10 flex items-center justify-center gap-1'>
 						<h1 className='text-2xl text-aromas_gray_text font-bold'>
 							Dashboard
@@ -154,11 +183,18 @@ const Dashboard: React.FC = () => {
 							activePage={activePage}
 							setActivePage={setActivePage}
 						/>
+						<button
+							type='button'
+							onClick={() => setIsSidebarOpen(false)}
+							aria-label='Cerrar menú del panel'
+							className='ml-auto rounded-md p-1 hover:bg-black/5 lg:hidden'>
+							<X className='h-5 w-5 text-aromas_gray_text' />
+						</button>
 					</div>
 					<Sidebar
 						dashboardItems={dashboardItems}
 						activePage={activePage}
-						setActivePage={setActivePage}
+						setActivePage={handleSelectPage}
 					/>
 					<div className='mt-auto text-center'>
 						<p className='text-sm text-gray-500'>
@@ -174,7 +210,7 @@ const Dashboard: React.FC = () => {
 				 */}
 				<main
 					data-tutorial='dashboard-content'
-					className={`flex-grow bg-white overflow-y-auto p-4 ${
+					className={`flex-grow min-w-0 bg-white overflow-y-auto p-4 ${
 						activePage === 'home'
 							? 'bg-gradient-to-br from-aromas_bg_gradient_1 to-aromas_bg_gradient_2'
 							: ''
@@ -182,7 +218,7 @@ const Dashboard: React.FC = () => {
 					<div>{ActiveComponent}</div>
 				</main>
 			</div>
-		</>
+		</div>
 	);
 };
 
