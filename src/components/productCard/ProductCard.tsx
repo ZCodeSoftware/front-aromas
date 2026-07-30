@@ -58,7 +58,7 @@ const ProductCard = ({ product }: IProductCardProps) => {
 
 	return (
 		<>
-			<Card className='w-full max-w-[389px] h-[420px] rounded-2xl overflow-hidden shadow-none bg-aromas_home_bg border-none flex flex-col gap-4 py-0'>
+			<Card className='w-full max-w-[389px] min-h-[420px] rounded-2xl overflow-hidden shadow-none bg-aromas_home_bg border-none flex flex-col gap-4 py-0'>
 				<div className='relative'>
 					<div className='w-full aspect-[16/9] h-64'>
 						<img

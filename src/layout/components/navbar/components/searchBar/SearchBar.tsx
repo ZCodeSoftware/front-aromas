@@ -102,7 +102,7 @@ const SearchBar = ({ onClose }: SearchOverlayProps) => {
 				</div>
 
 				{query && (
-					<div className='flex-grow pt-0 overflow-y-auto p-4 bg-white w-3/4 place-self-center rounded-b-lg'>
+					<div className='flex-grow pt-0 overflow-y-auto p-4 bg-white w-full sm:w-3/4 place-self-center rounded-b-lg'>
 						<div className='max-w-4xl mx-auto'>
 							<div className='mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4'>
 								{isLoading && query && (

@@ -29,7 +29,7 @@ const RegisterSale: React.FC = () => {
 	const [searching, setSearching] = useState(false);
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const [selectedProduct, setSelectedProduct] = useState<IProductData | null>(
-		null
+		null,
 	);
 	const [quantity, setQuantity] = useState(1);
 
@@ -45,7 +45,8 @@ const RegisterSale: React.FC = () => {
 		const loadPaymentMethods = async () => {
 			setLoadingPaymentMethods(true);
 			try {
-				const methods = await paymentMethodGetService.getPaymentMethods();
+				const methods =
+					await paymentMethodGetService.getPaymentMethods();
 				setPaymentMethods(methods);
 			} catch {
 				toast.error('No se pudieron cargar los métodos de pago.');
@@ -86,7 +87,7 @@ const RegisterSale: React.FC = () => {
 
 	const total = lines.reduce(
 		(sum, line) => sum + line.product.price * line.quantity,
-		0
+		0,
 	);
 
 	const resetForm = () => {
@@ -116,13 +117,13 @@ const RegisterSale: React.FC = () => {
 
 		setLines((prev) => {
 			const existing = prev.find(
-				(line) => line.product._id === selectedProduct._id
+				(line) => line.product._id === selectedProduct._id,
 			);
 			if (existing) {
 				return prev.map((line) =>
 					line.product._id === selectedProduct._id
 						? { ...line, quantity: line.quantity + quantity }
-						: line
+						: line,
 				);
 			}
 			return [...prev, { product: selectedProduct, quantity }];
@@ -136,7 +137,7 @@ const RegisterSale: React.FC = () => {
 
 	const handleRemoveLine = (productId: string) => {
 		setLines((prev) =>
-			prev.filter((line) => line.product._id !== productId)
+			prev.filter((line) => line.product._id !== productId),
 		);
 	};
 
@@ -165,7 +166,7 @@ const RegisterSale: React.FC = () => {
 			resetForm();
 		} catch (error) {
 			toast.error(
-				getApiErrorMessage(error, 'No se pudo registrar la venta.')
+				getApiErrorMessage(error, 'No se pudo registrar la venta.'),
 			);
 		} finally {
 			setSubmitting(false);
@@ -199,43 +200,48 @@ const RegisterSale: React.FC = () => {
 								onBlur={() =>
 									setTimeout(
 										() => setIsDropdownOpen(false),
-										150
+										150,
 									)
 								}
 								placeholder='Nombre del producto'
 							/>
-							{isDropdownOpen && searchTerm.trim().length >= 2 && (
-								<div className='absolute top-full z-10 mt-1 w-full rounded-md border bg-white shadow-md'>
-									{searching ? (
-										<p className='px-3 py-2 text-sm text-aromas_gray_text'>
-											Buscando...
-										</p>
-									) : searchResults.length === 0 ? (
-										<p className='px-3 py-2 text-sm text-aromas_gray_text'>
-											No se encontraron productos.
-										</p>
-									) : (
-										<ul className='max-h-60 overflow-y-auto'>
-											{searchResults.map((product) => (
-												<li key={product._id}>
-													<button
-														type='button'
-														onMouseDown={() =>
-															handleSelectProduct(
-																product
-															)
-														}
-														className='w-full px-3 py-2 text-left text-sm hover:bg-aromas_pink/20'>
-														{`${product.name} — $${product.price.toFixed(2)} (stock: ${product.stock})`}
-													</button>
-												</li>
-											))}
-										</ul>
-									)}
-								</div>
-							)}
+							{isDropdownOpen &&
+								searchTerm.trim().length >= 2 && (
+									<div className='absolute top-full z-10 mt-1 w-full rounded-md border bg-white shadow-md'>
+										{searching ? (
+											<p className='px-3 py-2 text-sm text-aromas_gray_text'>
+												Buscando...
+											</p>
+										) : searchResults.length === 0 ? (
+											<p className='px-3 py-2 text-sm text-aromas_gray_text'>
+												No se encontraron productos.
+											</p>
+										) : (
+											<ul className='max-h-60 overflow-y-auto'>
+												{searchResults.map(
+													(product) => (
+														<li key={product._id}>
+															<button
+																type='button'
+																onMouseDown={() =>
+																	handleSelectProduct(
+																		product,
+																	)
+																}
+																className='w-full px-3 py-2 text-left text-sm hover:bg-aromas_pink/20'>
+																{`${product.name} — $${product.price.toFixed(2)} (stock: ${product.stock})`}
+															</button>
+														</li>
+													),
+												)}
+											</ul>
+										)}
+									</div>
+								)}
 						</div>
-						<div data-tutorial='pos-quantity' className='grid gap-1.5'>
+						<div
+							data-tutorial='pos-quantity'
+							className='grid gap-1.5'>
 							<label htmlFor='quantity'>Cantidad</label>
 							<Input
 								id='quantity'
@@ -270,22 +276,28 @@ const RegisterSale: React.FC = () => {
 								<div
 									key={line.product._id}
 									className='flex items-center justify-between gap-x-4 px-4 py-3'>
-									<div className='flex flex-col'>
-										<p className='font-medium text-aromas_gray_text'>
+									<div className='flex min-w-0 flex-col'>
+										<p className='truncate font-medium text-aromas_gray_text'>
 											{line.product.name}
 										</p>
 										<p className='text-sm text-aromas_gray_text'>
 											{`${line.quantity} x $${line.product.price.toFixed(2)}`}
 										</p>
 									</div>
-									<div className='flex items-center gap-x-4'>
+									<div className='flex shrink-0 items-center gap-x-4'>
 										<p className='font-semibold text-aromas_fucsia'>
-											${(line.product.price * line.quantity).toFixed(2)}
+											$
+											{(
+												line.product.price *
+												line.quantity
+											).toFixed(2)}
 										</p>
 										<button
 											type='button'
 											onClick={() =>
-												handleRemoveLine(line.product._id)
+												handleRemoveLine(
+													line.product._id,
+												)
 											}
 											className='text-red-600 hover:text-red-700'>
 											<Trash2 className='h-4 w-4' />
@@ -311,7 +323,9 @@ const RegisterSale: React.FC = () => {
 							value={paymentMethod}
 							onValueChange={setPaymentMethod}
 							disabled={loadingPaymentMethods}>
-							<SelectTrigger id='paymentMethod' className='w-full'>
+							<SelectTrigger
+								id='paymentMethod'
+								className='w-full'>
 								<SelectValue placeholder='Seleccioná un método de pago' />
 							</SelectTrigger>
 							<SelectContent className='bg-white'>
@@ -330,7 +344,7 @@ const RegisterSale: React.FC = () => {
 						<Button
 							type='submit'
 							data-tutorial='pos-submit'
-							className='w-3/12 bg-aromas_pink text-aromas_gray_text'
+							className='bg-aromas_pink text-aromas_gray_text'
 							disabled={submitting}>
 							{submitting && (
 								<Loader2 className='mr-2 h-4 w-4 animate-spin' />

@@ -48,7 +48,7 @@ const controlMatches = (control: ITutorialControl, query: string) =>
 			control.tip ?? '',
 			control.warning ?? '',
 			...control.steps,
-		].join(' ')
+		].join(' '),
 	).includes(query);
 
 const countControls = (section: ITutorialSection) =>
@@ -65,7 +65,7 @@ const TutorialsDialog = ({
 }: ITutorialsDialogProps) => {
 	const [tab, setTab] = useState<IGuideTab>('tours');
 	const [sectionId, setSectionId] = useState(() =>
-		getTutorialSectionId(activePage)
+		getTutorialSectionId(activePage),
 	);
 	const [query, setQuery] = useState('');
 
@@ -94,8 +94,8 @@ const TutorialsDialog = ({
 					.map((control) => ({
 						control,
 						sectionTitle: `${section.title} › ${group.title}`,
-					}))
-			)
+					})),
+			),
 		);
 	}, [trimmedQuery]);
 
@@ -108,7 +108,7 @@ const TutorialsDialog = ({
 				const secondScore = coversPage(second, activePage) ? 0 : 1;
 				return firstScore - secondScore;
 			}),
-		[activePage]
+		[activePage],
 	);
 
 	const handleStartTour = (tour: ITourDefinition) => {
@@ -119,13 +119,14 @@ const TutorialsDialog = ({
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogContent className='flex max-h-[88vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl'>
-				<DialogHeader className='border-b p-6 pb-4'>
+				<DialogHeader className='border-b p-4 pb-4'>
 					<DialogTitle className='text-xl text-aromas_gray_text'>
 						Guía de uso del panel
 					</DialogTitle>
 					<DialogDescription>
-						Recorridos que te llevan paso a paso por cada pantalla, y una
-						referencia de todos los botones para consultar suelto.
+						Recorridos que te llevan paso a paso por cada pantalla,
+						y una referencia de todos los botones para consultar
+						suelto.
 					</DialogDescription>
 					<div className='mt-3 flex items-center gap-2'>
 						<Button
@@ -156,13 +157,14 @@ const TutorialsDialog = ({
 				{tab === 'tours' ? (
 					<div className='flex-1 overflow-y-auto p-4'>
 						<p className='mb-3 text-sm text-aromas_gray_text/70'>
-							Cada recorrido resalta el botón del que habla sobre la
-							pantalla real y espera a que avances. Podés usar las
-							flechas ← y → del teclado, y salir con Escape.
+							Cada recorrido resalta el botón del que habla sobre
+							la pantalla real y espera a que avances. Podés usar
+							las flechas ← y → del teclado, y salir con Escape.
 						</p>
 						<p className='mb-4 rounded-lg bg-aromas_nav_bg p-2.5 text-sm text-aromas_gray_text'>
-							Los recorridos cambian de pantalla por su cuenta, así que
-							guardá lo que estés editando antes de empezar.
+							Los recorridos cambian de pantalla por su cuenta,
+							así que guardá lo que estés editando antes de
+							empezar.
 						</p>
 
 						<div className='grid gap-3 sm:grid-cols-2'>
@@ -213,7 +215,9 @@ const TutorialsDialog = ({
 							<Search className='absolute top-1/2 left-7 h-4 w-4 -translate-y-1/2 text-aromas_gray_text/50' />
 							<Input
 								value={query}
-								onChange={(event) => setQuery(event.target.value)}
+								onChange={(event) =>
+									setQuery(event.target.value)
+								}
 								placeholder='Buscar un botón: reembolsar, mostrar inactivos, recortar…'
 								className='pl-9'
 							/>
@@ -241,7 +245,9 @@ const TutorialsDialog = ({
 										<Button
 											key={section.id}
 											variant='ghost'
-											onClick={() => setSectionId(section.id)}
+											onClick={() =>
+												setSectionId(section.id)
+											}
 											className={`h-auto w-full justify-start gap-2 py-2 text-left whitespace-normal ${
 												section.id === activeSection.id
 													? 'bg-aromas_pink text-aromas_gray_text'
@@ -266,17 +272,21 @@ const TutorialsDialog = ({
 									</p>
 
 									{activeSection.groups.map((group) => (
-										<section key={group.title} className='mt-5'>
+										<section
+											key={group.title}
+											className='mt-5'>
 											<h4 className='mb-2 text-xs font-semibold tracking-wide text-aromas_fucsia uppercase'>
 												{group.title}
 											</h4>
 											<div className='space-y-3'>
-												{group.controls.map((control) => (
-													<TutorialControlCard
-														key={control.label}
-														control={control}
-													/>
-												))}
+												{group.controls.map(
+													(control) => (
+														<TutorialControlCard
+															key={control.label}
+															control={control}
+														/>
+													),
+												)}
 											</div>
 										</section>
 									))}

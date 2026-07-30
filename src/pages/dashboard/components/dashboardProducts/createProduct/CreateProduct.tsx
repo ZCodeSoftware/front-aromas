@@ -112,7 +112,7 @@ const CreateProduct: React.FC = () => {
 	}, [errors, product]);
 
 	const handleChange = (
-		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
 	) => {
 		const { name, value } = e.target;
 		const numberFields = ['price', 'stock'];
@@ -123,7 +123,7 @@ const CreateProduct: React.FC = () => {
 	};
 
 	const handleBlur = (
-		e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>
+		e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
 	) => {
 		const { name } = e.target;
 		setTouched((prev) => ({
@@ -140,10 +140,10 @@ const CreateProduct: React.FC = () => {
 			subCategory: '',
 		}));
 		const selectedCategory = categories.find(
-			(cat) => cat._id === categoryId
+			(cat) => cat._id === categoryId,
 		);
 		setSubCategories(
-			selectedCategory ? selectedCategory.subCategories : []
+			selectedCategory ? selectedCategory.subCategories : [],
 		);
 	};
 
@@ -178,10 +178,10 @@ const CreateProduct: React.FC = () => {
 			const uploadedImages = await uploadToCloudinary(
 				imageFiles,
 				'Productos',
-				product
+				product,
 			);
 			const validImages = uploadedImages.filter(
-				(url): url is string => url !== null
+				(url): url is string => url !== null,
 			);
 			const payload: Partial<IProductForm> = {
 				name: product.name,
@@ -269,7 +269,9 @@ const CreateProduct: React.FC = () => {
 						)}
 					</div>
 					<div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-						<div data-tutorial='product-category' className='grid gap-1.5'>
+						<div
+							data-tutorial='product-category'
+							className='grid gap-1.5'>
 							<label htmlFor='category'>Categoría</label>
 							<Select
 								onValueChange={handleCategoryChange}
@@ -495,7 +497,7 @@ const CreateProduct: React.FC = () => {
 						<Button
 							type='submit'
 							data-tutorial='product-submit'
-							className='w-3/12 bg-aromas_pink text-aromas_gray_text'
+							className='bg-aromas_pink text-aromas_gray_text'
 							disabled={submitDisable || buttonLoading}>
 							{buttonLoading && (
 								<Loader2 className='mr-2 h-4 w-4 animate-spin' />
