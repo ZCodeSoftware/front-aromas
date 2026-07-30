@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Trash2 } from 'lucide-react';
 import {
 	Table,
 	TableBody,
@@ -9,7 +8,6 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -21,12 +19,12 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import TableSkeleton from '../../TableSkeleton';
+import ShowInactiveToggle from '../../ShowInactiveToggle';
 import type { IProductData } from '@/services/products/models/products.interface';
 import { productsGetService } from '@/services/products/GET/products.service.get';
 import type { IReview } from '@/services/review/models/review.interface';
 import { reviewGetService } from '@/services/review/GET/review.service.get';
 import { reviewPutService } from '@/services/review/PUT/review.service.put';
-import { reviewDeleteService } from '@/services/review/DELETE/review.service.delete';
 import { getApiErrorMessage } from '@/services/auth/utils/get-api-error-message';
 
 const getAuthorLabel = (user: IReview['user']): string => {
@@ -43,8 +41,8 @@ const ReviewsList = () => {
 	);
 	const [reviews, setReviews] = useState<IReview[]>([]);
 	const [reviewsLoading, setReviewsLoading] = useState(false);
+	const [showInactive, setShowInactive] = useState(false);
 	const [togglingId, setTogglingId] = useState<string | null>(null);
-	const [deletingId, setDeletingId] = useState<string | null>(null);
 
 	const getProducts = async () => {
 		setProductsLoading(true);
@@ -68,9 +66,14 @@ const ReviewsList = () => {
 	const getReviews = async (productId: string) => {
 		setReviewsLoading(true);
 		try {
-			const result = await reviewGetService.getProductReviews(productId, {
-				limit: 50,
-			});
+			const result = showInactive
+				? await reviewGetService.getProductReviewsIncludingInactive(
+						productId,
+						{ limit: 50 }
+				  )
+				: await reviewGetService.getProductReviews(productId, {
+						limit: 50,
+				  });
 			if (result?.data) {
 				setReviews(result.data);
 			}
@@ -93,7 +96,8 @@ const ReviewsList = () => {
 			return;
 		}
 		getReviews(selectedProductId);
-	}, [selectedProductId]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedProductId, showInactive]);
 
 	const handleToggleActive = async (review: IReview) => {
 		setTogglingId(review._id);
@@ -112,29 +116,11 @@ const ReviewsList = () => {
 		}
 	};
 
-	const handleDelete = async (review: IReview) => {
-		const confirmed = window.confirm(
-			'¿Seguro que querés eliminar esta reseña?'
-		);
-		if (!confirmed) return;
-
-		setDeletingId(review._id);
-		try {
-			await reviewDeleteService.deleteReview(review._id);
-			toast.success('Reseña eliminada con éxito.');
-			if (selectedProductId) getReviews(selectedProductId);
-		} catch (error) {
-			toast.error(
-				getApiErrorMessage(error, 'No se pudo eliminar la reseña.')
-			);
-		} finally {
-			setDeletingId(null);
-		}
-	};
-
 	return (
 		<div className='w-full p-4'>
-			<div className='flex flex-col gap-2 mb-4 sm:flex-row sm:items-center'>
+			<div
+				data-tutorial='reviews-filters'
+				className='flex flex-col gap-2 mb-4 sm:flex-row sm:items-center'>
 				<Input
 					placeholder='Buscar producto...'
 					value={productSearch}
@@ -156,6 +142,12 @@ const ReviewsList = () => {
 						))}
 					</SelectContent>
 				</Select>
+				<div className='sm:ml-auto'>
+					<ShowInactiveToggle
+						checked={showInactive}
+						onCheckedChange={setShowInactive}
+					/>
+				</div>
 			</div>
 
 			{!selectedProductId && (
@@ -167,7 +159,7 @@ const ReviewsList = () => {
 			{selectedProductId && reviewsLoading && <TableSkeleton />}
 
 			{selectedProductId && !reviewsLoading && (
-				<Table>
+				<Table data-tutorial='reviews-table'>
 					<TableHeader>
 						<TableRow>
 							<TableHead>Usuario</TableHead>
@@ -192,7 +184,9 @@ const ReviewsList = () => {
 							</TableRow>
 						)}
 						{reviews.map((review) => (
-							<TableRow key={review._id}>
+							<TableRow
+								key={review._id}
+								className={review.isActive ? '' : 'opacity-50'}>
 								<TableCell className='font-medium'>
 									{getAuthorLabel(review.user)}
 								</TableCell>
@@ -220,13 +214,6 @@ const ReviewsList = () => {
 												handleToggleActive(review)
 											}
 										/>
-										<Button
-											variant='ghost'
-											size='icon'
-											disabled={deletingId === review._id}
-											onClick={() => handleDelete(review)}>
-											<Trash2 className='h-4 w-4 text-red-600' />
-										</Button>
 									</div>
 								</TableCell>
 							</TableRow>

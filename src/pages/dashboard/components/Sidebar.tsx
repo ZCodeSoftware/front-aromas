@@ -22,7 +22,9 @@ const Sidebar = ({
 						key={item.id}
 						className='w-full'>
 						<AccordionItem value={item.id} className='border-b-0'>
-							<AccordionTrigger className='py-2 px-3 hover:bg-muted/50 rounded-md'>
+							<AccordionTrigger
+								data-tutorial={`nav-item-${item.id}`}
+								className='py-2 px-3 hover:bg-muted/50 rounded-md'>
 								{item.name}
 							</AccordionTrigger>
 							<AccordionContent className='pl-4 pt-2'>
@@ -30,6 +32,7 @@ const Sidebar = ({
 									{item.subItems.map((subItem) => (
 										<Button
 											key={subItem.id}
+											data-tutorial={`nav-subitem-${subItem.id}`}
 											variant={
 												activePage === subItem.id
 													? 'secondary'
@@ -51,6 +54,7 @@ const Sidebar = ({
 			return (
 				<Button
 					key={item.id}
+					data-tutorial={`nav-item-${item.id}`}
 					variant={activePage === item.id ? 'default' : 'ghost'}
 					className='w-full justify-start'
 					onClick={() => setActivePage(item.id)}>

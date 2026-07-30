@@ -182,7 +182,9 @@ const RegisterSale: React.FC = () => {
 			<CardContent>
 				<form onSubmit={handleSubmit} className='space-y-6'>
 					<div className='grid grid-cols-1 md:grid-cols-[1fr_140px_auto] gap-3 items-start'>
-						<div className='relative grid gap-1.5'>
+						<div
+							data-tutorial='pos-search'
+							className='relative grid gap-1.5'>
 							<label htmlFor='search'>Buscar producto</label>
 							<Input
 								id='search'
@@ -233,7 +235,7 @@ const RegisterSale: React.FC = () => {
 								</div>
 							)}
 						</div>
-						<div className='grid gap-1.5'>
+						<div data-tutorial='pos-quantity' className='grid gap-1.5'>
 							<label htmlFor='quantity'>Cantidad</label>
 							<Input
 								id='quantity'
@@ -249,13 +251,16 @@ const RegisterSale: React.FC = () => {
 							type='button'
 							onClick={handleAddLine}
 							disabled={!selectedProduct}
+							data-tutorial='pos-add'
 							className='mt-6 bg-aromas_pink text-aromas_gray_text'>
 							<Plus className='mr-2 h-4 w-4' />
 							Agregar
 						</Button>
 					</div>
 
-					<div className='border rounded-lg divide-y'>
+					<div
+						data-tutorial='pos-lines'
+						className='border rounded-lg divide-y'>
 						{lines.length === 0 ? (
 							<p className='text-center text-aromas_gray_text py-6'>
 								Todavía no agregaste productos a la venta.
@@ -300,7 +305,7 @@ const RegisterSale: React.FC = () => {
 						</p>
 					</div>
 
-					<div className='grid gap-1.5'>
+					<div data-tutorial='pos-payment' className='grid gap-1.5'>
 						<label htmlFor='paymentMethod'>Método de pago</label>
 						<Select
 							value={paymentMethod}
@@ -324,6 +329,7 @@ const RegisterSale: React.FC = () => {
 					<div className='w-full flex justify-center'>
 						<Button
 							type='submit'
+							data-tutorial='pos-submit'
 							className='w-3/12 bg-aromas_pink text-aromas_gray_text'
 							disabled={submitting}>
 							{submitting && (

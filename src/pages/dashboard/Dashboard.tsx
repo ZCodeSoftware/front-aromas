@@ -6,8 +6,6 @@ import DashboardCreateProduct from './components/dashboardProducts/createProduct
 import Sidebar from './components/Sidebar';
 import DashboardCatalogsList from './components/dashboardCatalogs/catalogsList/DashboardCatalogList';
 import DashboardCreateCatalogs from './components/dashboardCatalogs/createCatalogs/DashboardCreate';
-import TypeHousingsList from './components/dashboardCatalogs/catalogsList/TypeHousingsList';
-import PaymentMethodsList from './components/dashboardCatalogs/catalogsList/PaymentMethodsList';
 import RolesList from './components/dashboardCatalogs/catalogsList/RolesList';
 import UsersList from './components/dashboardUsers/usersList/UsersList';
 import OrdersList from './components/dashboardOrders/ordersList/OrdersList';
@@ -15,6 +13,7 @@ import RegisterSale from './components/dashboardPos/registerSale/RegisterSale';
 import SalesList from './components/dashboardPos/salesList/SalesList';
 import ReviewsList from './components/dashboardReviews/reviewsList/ReviewsList';
 import Navbar from '@/layout/components/navbar/Navbar';
+import DashboardGuide from './components/tutorials/DashboardGuide';
 
 const Dashboard: React.FC = () => {
 	const dashboardItems: IDashboardItem[] = [
@@ -54,16 +53,6 @@ const Dashboard: React.FC = () => {
 					component: <DashboardCreateCatalogs />,
 				},
 			],
-		},
-		{
-			id: 'type-housings',
-			name: 'Tipos de Vivienda',
-			component: <TypeHousingsList />,
-		},
-		{
-			id: 'payment-methods',
-			name: 'Método de Pago',
-			component: <PaymentMethodsList />,
 		},
 		{
 			id: 'users',
@@ -147,11 +136,24 @@ const Dashboard: React.FC = () => {
 		<>
 			<Navbar />
 			<div className='flex w-full h-[93.5vh]'>
-				<div className='w-64 bg-aromas_nav_bg border-r p-4 flex flex-col overflow-y-auto'>
-					<div className='mb-10 text-center'>
+				{/*
+				 * `aside`, so the sidebar is a complementary landmark rather
+				 * than page content sitting outside every landmark — which is
+				 * what left the dashboard heading unreachable by landmark
+				 * navigation.
+				 */}
+				<aside
+					aria-label='Secciones del dashboard'
+					data-tutorial='dashboard-sidebar'
+					className='w-64 bg-aromas_nav_bg border-r p-4 flex flex-col overflow-y-auto'>
+					<div className='mb-10 flex items-center justify-center gap-1'>
 						<h1 className='text-2xl text-aromas_gray_text font-bold'>
 							Dashboard
 						</h1>
+						<DashboardGuide
+							activePage={activePage}
+							setActivePage={setActivePage}
+						/>
 					</div>
 					<Sidebar
 						dashboardItems={dashboardItems}
@@ -163,15 +165,22 @@ const Dashboard: React.FC = () => {
 							© 2025 Aromas y Armonía. All rights reserved.
 						</p>
 					</div>
-				</div>
-				<div
+				</aside>
+				{/*
+				 * A `main` landmark, not a div: this is the one region a
+				 * screen-reader user wants to jump straight to, and without it
+				 * the only way into the content is tabbing past the whole
+				 * sidebar tree on every page change.
+				 */}
+				<main
+					data-tutorial='dashboard-content'
 					className={`flex-grow bg-white overflow-y-auto p-4 ${
 						activePage === 'home'
 							? 'bg-gradient-to-br from-aromas_bg_gradient_1 to-aromas_bg_gradient_2'
 							: ''
 					}`}>
 					<div>{ActiveComponent}</div>
-				</div>
+				</main>
 			</div>
 		</>
 	);

@@ -31,6 +31,27 @@ export default {
 				aromas_header_bg_gradient_1: '#FCD5CE',
 				aromas_home_bg: '#F8F5FF',
 				aromas_success: '#166534',
+
+				/*
+				 * Accessible ink steps. `aromas_fucsia` (#EB5480) only reaches
+				 * 3.44:1 on white, so it cannot carry text or icons on its own;
+				 * these are the same hue stepped down until they clear WCAG AA.
+				 * Ratios measured against #FFFFFF.
+				 */
+				aromas_fucsia_ink: '#A51D44' /* 7.35:1 — text, borders, focus */,
+				aromas_ink: '#1F1F1F' /* 15.9:1 — headings, values */,
+				aromas_ink_muted: '#5B5A56' /* 6.90:1 — captions, axis text */,
+				aromas_ink_axis: '#575652' /* 7.35:1 — chart tick labels */,
+				aromas_hairline: '#DEDCD5' /* decorative gridlines only */,
+
+				/*
+				 * Status *text*. The chart status fills (warning #FAB219 at
+				 * 1.83:1, serious #EC835A at 2.64:1) are deliberately below
+				 * 3:1 and are always paired with an icon and a label — these
+				 * are the steps that pairing is written in.
+				 */
+				aromas_warning_ink: '#8A5300' /* 6.33:1 */,
+				aromas_critical_ink: '#A10F0F' /* 8.11:1 */,
 			},
 			keyframes: {
 				'scale-in': {

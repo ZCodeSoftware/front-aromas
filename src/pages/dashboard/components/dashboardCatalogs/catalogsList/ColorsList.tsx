@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
-import { Pencil, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Pencil } from 'lucide-react';
 import {
 	Table,
 	TableBody,
@@ -10,112 +9,107 @@ import {
 	TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import TableSkeleton from '../../TableSkeleton';
+import ShowInactiveToggle from '../../ShowInactiveToggle';
+import { useActiveRecordsList } from '@/pages/dashboard/hooks/useActiveRecordsList';
 import type { IColor } from '@/services/catalogs/colors/models/colors.interface';
 import { colorsGetService } from '@/services/catalogs/colors/GET/colors.service.get';
-import { colorsDeleteService } from '@/services/catalogs/colors/DELETE/colors.service.delete';
-import { getApiErrorMessage } from '@/services/auth/utils/get-api-error-message';
+import {
+	getCatalogIncludingInactive,
+	setCatalogItemActive,
+} from '@/services/catalogs/catalog-status.service';
 import UpdateColor from '../updateCatalogs/UpdateColor';
 
 const ColorsList = () => {
-	const [loading, setLoading] = useState(true);
-	const [colorsData, setColorsData] = useState<IColor[]>([]);
 	const [openUpdateModal, setOpenUpdateModal] = useState(false);
 	const [selectedColor, setSelectedColor] = useState<IColor | null>(null);
-	const [deletingId, setDeletingId] = useState<string | null>(null);
 
-	const getData = async () => {
-		setLoading(true);
-		try {
-			const result = await colorsGetService.getColors();
-			if (result) {
-				setColorsData(result);
-			}
-		} catch (error) {
-			console.error('Error fetching brands:', error);
-			toast.error('No se pudieron cargar las marcas.');
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	useEffect(() => {
-		getData();
-	}, []);
+	const {
+		items: colorsData,
+		loading,
+		showInactive,
+		setShowInactive,
+		togglingId,
+		toggleActive,
+		refresh,
+	} = useActiveRecordsList<IColor>({
+		fetchItems: (includeInactive) =>
+			includeInactive
+				? getCatalogIncludingInactive<IColor>('cat-color')
+				: colorsGetService.getColors(),
+		setItemActive: (id, isActive) =>
+			setCatalogItemActive('cat-color', id, isActive),
+		loadErrorMessage: 'No se pudieron cargar los colores.',
+		toggleErrorMessage: 'No se pudo actualizar el estado del color.',
+	});
 
 	const handleEditClick = (color: IColor) => {
 		setSelectedColor(color);
 		setOpenUpdateModal(true);
 	};
 
-	const handleDelete = async (color: IColor) => {
-		const confirmed = window.confirm(
-			`¿Seguro que querés eliminar "${color.name}"?`
-		);
-		if (!confirmed) return;
-
-		setDeletingId(color._id);
-		try {
-			await colorsDeleteService.deleteColor(color._id);
-			toast.success('Color eliminado con éxito.');
-			getData();
-		} catch (error) {
-			toast.error(getApiErrorMessage(error, 'No se pudo eliminar el color.'));
-		} finally {
-			setDeletingId(null);
-		}
-	};
-
-	if (loading) {
-		return <TableSkeleton />;
-	}
-
 	return (
 		<>
 			<div className='w-full p-4'>
-				<Table>
-					<TableHeader>
-						<TableRow>
-							<TableHead>Nombre</TableHead>
-							<TableHead className='text-center'>Color</TableHead>
-							<TableHead className='text-right'>
-								Acciones
-							</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{colorsData.map((colors) => (
-							<TableRow key={colors._id}>
-								<TableCell className='font-medium'>
-									{colors.name}
-								</TableCell>
-								<TableCell className='flex items-center justify-center font-medium'>
-									<Button
-										disabled
-										className='rounded-full w-9 min-h-full'
-										style={{
-											backgroundColor: colors.hex,
-										}}></Button>
-								</TableCell>
-								<TableCell className='text-right'>
-									<Button
-										variant='ghost'
-										size='icon'
-										onClick={() => handleEditClick(colors)}>
-										<Pencil className='h-4 w-4' />
-									</Button>
-									<Button
-										variant='ghost'
-										size='icon'
-										disabled={deletingId === colors._id}
-										onClick={() => handleDelete(colors)}>
-										<Trash2 className='h-4 w-4 text-red-600' />
-									</Button>
-								</TableCell>
+				<div className='w-full flex justify-end mb-4'>
+					<ShowInactiveToggle
+						checked={showInactive}
+						onCheckedChange={setShowInactive}
+					/>
+				</div>
+				{loading ? (
+					<TableSkeleton />
+				) : (
+					<Table>
+						<TableHeader>
+							<TableRow>
+								<TableHead>Nombre</TableHead>
+								<TableHead className='text-center'>Color</TableHead>
+								<TableHead className='text-center'>Estado</TableHead>
+								<TableHead className='text-right'>
+									Acciones
+								</TableHead>
 							</TableRow>
-						))}
-					</TableBody>
-				</Table>
+						</TableHeader>
+						<TableBody>
+							{colorsData.map((colors) => (
+								<TableRow
+									key={colors._id}
+									className={colors.isActive ? '' : 'opacity-50'}>
+									<TableCell className='font-medium'>
+										{colors.name}
+									</TableCell>
+									<TableCell className='flex items-center justify-center font-medium'>
+										<Button
+											disabled
+											className='rounded-full w-9 min-h-full'
+											style={{
+												backgroundColor: colors.hex,
+											}}></Button>
+									</TableCell>
+									<TableCell className='text-center'>
+										<Switch
+											checked={colors.isActive}
+											disabled={togglingId === colors._id}
+											onCheckedChange={() =>
+												toggleActive(colors)
+											}
+										/>
+									</TableCell>
+									<TableCell className='text-right'>
+										<Button
+											variant='ghost'
+											size='icon'
+											onClick={() => handleEditClick(colors)}>
+											<Pencil className='h-4 w-4' />
+										</Button>
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+				)}
 			</div>
 			{selectedColor && (
 				<UpdateColor
@@ -123,7 +117,7 @@ const ColorsList = () => {
 					openUpdateModal={openUpdateModal}
 					setOpenUpdateModal={setOpenUpdateModal}
 					id={selectedColor._id}
-					onUpdate={getData}
+					onUpdate={refresh}
 				/>
 			)}
 		</>

@@ -1,171 +1,188 @@
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useCallback } from 'react';
+import { RankedBarChart, ShareBar } from '@/components/charts';
 import { analyticsGetService } from '@/services/analytics/GET/analytics.service.get';
-import type { ICustomersReport } from '@/services/analytics/models/analytics.interface';
 import StatTile from './StatTile';
-import { formatCompactNumber, formatCurrency } from './utils/format';
+import MetricCard from './components/MetricCard';
+import {
+	AnalyticsError,
+	AnalyticsLoading,
+	StatTileGroup,
+} from './components/AnalyticsStates';
+import { useAnalyticsResource } from './hooks/useAnalyticsResource';
+import type { IAnalyticsViewProps } from './models/analytics-view-props.interface';
+import { describeRange } from './utils/analytics-range';
+import {
+	formatCurrency,
+	formatInstantAsDay,
+	formatInteger,
+} from './utils/format';
 
-const AnalyticsCustomers = () => {
-	const [loading, setLoading] = useState(true);
-	const [data, setData] = useState<ICustomersReport | null>(null);
+const AnalyticsCustomers = ({ range }: IAnalyticsViewProps) => {
+	const load = useCallback(
+		() =>
+			analyticsGetService.getCustomers({
+				dateFrom: range.dateFrom,
+				dateTo: range.dateTo,
+				timezone: range.timezone,
+			}),
+		[range.dateFrom, range.dateTo, range.timezone]
+	);
 
-	const getData = async () => {
-		setLoading(true);
-		try {
-			const result = await analyticsGetService.getCustomers();
-			setData(result);
-		} catch (error) {
-			console.error('Error fetching customers analytics:', error);
-			toast.error('No se pudieron cargar los clientes.');
-		} finally {
-			setLoading(false);
-		}
-	};
+	const customers = useAnalyticsResource(load);
 
-	useEffect(() => {
-		getData();
-	}, []);
+	if (customers.status === 'loading') {
+		return <AnalyticsLoading tiles={4} label='Cargando los clientes…' />;
+	}
 
-	if (loading) {
+	if (customers.status === 'error' || !customers.data) {
 		return (
-			<div className='grid grid-cols-2 md:grid-cols-3 gap-4 p-4'>
-				{Array.from({ length: 6 }).map((_, index) => (
-					<Skeleton key={index} className='h-24 w-full rounded-xl' />
-				))}
-			</div>
+			<AnalyticsError
+				message='No pudimos cargar las métricas de clientes.'
+				onRetry={customers.retry}
+			/>
 		);
 	}
 
-	if (!data) {
-		return (
-			<div className='w-full p-8 text-center text-sm text-aromas_gray_text/70'>
-				No se pudieron cargar los clientes.
-			</div>
-		);
-	}
+	const { topCustomers, cohorts, anonymous } = customers.data;
+	const isStale = customers.status === 'refreshing';
 
-	const { topCustomers, cohorts, anonymous, range } = data;
+	const displayName = (customer: (typeof topCustomers)[number]): string =>
+		[customer.firstName, customer.lastName].filter(Boolean).join(' ') ||
+		customer.email ||
+		customer.userId;
 
 	return (
-		<div className='w-full flex flex-col gap-4 p-4'>
-			<span className='text-xs text-aromas_gray_text/70'>
-				Rango: {range.dateFrom} a {range.dateTo} ({range.timezone})
-			</span>
-
-			<div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
+		<div className='flex flex-col gap-4'>
+			<StatTileGroup className='xl:grid-cols-4'>
 				<StatTile
 					label='Clientes nuevos'
-					value={formatCompactNumber(cohorts.newCustomers)}
+					value={formatInteger(cohorts.newCustomers)}
+					scope='range'
 				/>
 				<StatTile
 					label='Clientes recurrentes'
-					value={formatCompactNumber(cohorts.returningCustomers)}
-				/>
-				<StatTile
-					label='Órdenes de nuevos'
-					value={formatCompactNumber(cohorts.ordersFromNew)}
-				/>
-				<StatTile
-					label='Órdenes de recurrentes'
-					value={formatCompactNumber(cohorts.ordersFromReturning)}
+					value={formatInteger(cohorts.returningCustomers)}
+					scope='range'
 				/>
 				<StatTile
 					label='Ingresos de nuevos'
 					value={formatCurrency(cohorts.revenueFromNew)}
+					scope='range'
 				/>
 				<StatTile
 					label='Ingresos de recurrentes'
 					value={formatCurrency(cohorts.revenueFromReturning)}
+					scope='range'
 				/>
+			</StatTileGroup>
+
+			<div className='grid grid-cols-1 gap-4 xl:grid-cols-2'>
+				<MetricCard
+					title='Órdenes: nuevos frente a recurrentes'
+					description='Cuántas compras aporta cada cohorte.'
+					scope='range'>
+					<ShareBar
+						title='Reparto de órdenes por cohorte'
+						segments={[
+							{
+								key: 'new',
+								label: 'Clientes nuevos',
+								value: cohorts.ordersFromNew,
+							},
+							{
+								key: 'returning',
+								label: 'Clientes recurrentes',
+								value: cohorts.ordersFromReturning,
+							},
+						]}
+						valueLabel='Órdenes'
+						categoryLabel='Cohorte'
+						formatValue={formatInteger}
+						summary={`Reparto de órdenes entre clientes nuevos y recurrentes entre ${describeRange(
+							range
+						)}.`}
+						footnote={cohorts.definition}
+						emptyMessage='Todavía no hay órdenes de clientes registrados en este período.'
+						isStale={isStale}
+					/>
+				</MetricCard>
+
+				<MetricCard
+					title='Ingresos: nuevos frente a recurrentes'
+					description='Cuánta facturación aporta cada cohorte.'
+					scope='range'>
+					<ShareBar
+						title='Reparto de ingresos por cohorte'
+						segments={[
+							{
+								key: 'new',
+								label: 'Clientes nuevos',
+								value: cohorts.revenueFromNew,
+							},
+							{
+								key: 'returning',
+								label: 'Clientes recurrentes',
+								value: cohorts.revenueFromReturning,
+							},
+						]}
+						valueLabel='Ingresos'
+						categoryLabel='Cohorte'
+						formatValue={formatCurrency}
+						summary={`Reparto de ingresos entre clientes nuevos y recurrentes entre ${describeRange(
+							range
+						)}.`}
+						emptyMessage='Todavía no hay ingresos de clientes registrados en este período.'
+						isStale={isStale}
+					/>
+				</MetricCard>
 			</div>
-			<span className='text-xs text-aromas_gray_text/70'>
-				{cohorts.definition}
-			</span>
 
-			<Card>
-				<CardHeader>
-					<CardTitle>Ventas anónimas</CardTitle>
-				</CardHeader>
-				<CardContent className='flex flex-col gap-2'>
-					<div className='flex flex-wrap gap-6 text-sm'>
-						<span>
-							Órdenes:{' '}
-							<span className='font-medium'>
-								{formatCompactNumber(anonymous.orders)}
-							</span>
-						</span>
-						<span>
-							Ingresos:{' '}
-							<span className='font-medium'>
-								{formatCurrency(anonymous.revenue)}
-							</span>
-						</span>
-					</div>
-					<span className='text-xs text-aromas_gray_text/70'>
-						{anonymous.note}
-					</span>
-				</CardContent>
-			</Card>
+			<MetricCard
+				title='Mejores clientes'
+				description='Por facturación en el período. La tabla de datos incluye la fecha de la última compra.'
+				scope='range'>
+				<RankedBarChart
+					title='Clientes por facturación'
+					items={topCustomers.map((customer) => ({
+						key: customer.userId,
+						label: displayName(customer),
+						value: customer.revenue,
+						secondary: {
+							label: 'Órdenes',
+							value: `${formatInteger(
+								customer.orders
+							)} · última ${formatInstantAsDay(customer.lastOrderAt)}`,
+						},
+					}))}
+					valueLabel='Ingresos'
+					categoryLabel='Cliente'
+					formatValue={formatCurrency}
+					summary={`Ranking de clientes por facturación entre ${describeRange(
+						range
+					)}.`}
+					emptyMessage='Todavía no hay compras de clientes registrados en este período.'
+					isStale={isStale}
+				/>
+			</MetricCard>
 
-			<Card>
-				<CardHeader>
-					<CardTitle>Mejores clientes</CardTitle>
-				</CardHeader>
-				<CardContent>
-					{topCustomers.length === 0 ? (
-						<span className='text-sm text-aromas_gray_text/70'>
-							Sin datos.
-						</span>
-					) : (
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead>Cliente</TableHead>
-									<TableHead className='text-right'>Órdenes</TableHead>
-									<TableHead className='text-right'>Ingresos</TableHead>
-									<TableHead className='text-right'>
-										Última orden
-									</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{topCustomers.map((customer) => (
-									<TableRow key={customer.userId}>
-										<TableCell className='font-medium'>
-											{[customer.firstName, customer.lastName]
-												.filter(Boolean)
-												.join(' ') ||
-												customer.email ||
-												customer.userId}
-										</TableCell>
-										<TableCell className='text-right'>
-											{customer.orders}
-										</TableCell>
-										<TableCell className='text-right'>
-											{formatCurrency(customer.revenue)}
-										</TableCell>
-										<TableCell className='text-right'>
-											{new Date(
-												customer.lastOrderAt
-											).toLocaleDateString('es-AR')}
-										</TableCell>
-									</TableRow>
-								))}
-							</TableBody>
-						</Table>
-					)}
-				</CardContent>
-			</Card>
+			<MetricCard
+				title='Ventas anónimas'
+				description={anonymous.note}
+				scope='range'>
+				<StatTileGroup className='sm:grid-cols-2'>
+					<StatTile
+						label='Órdenes anónimas'
+						value={formatInteger(anonymous.orders)}
+						scope='range'
+					/>
+					<StatTile
+						label='Ingresos anónimos'
+						value={formatCurrency(anonymous.revenue)}
+						hint='No entran en ninguna de las dos cohortes.'
+						scope='range'
+					/>
+				</StatTileGroup>
+			</MetricCard>
 		</div>
 	);
 };

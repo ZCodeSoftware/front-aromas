@@ -1,204 +1,169 @@
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useCallback } from 'react';
+import { HeatmapChart, ShareBar } from '@/components/charts';
 import { analyticsGetService } from '@/services/analytics/GET/analytics.service.get';
-import type { ISalesBreakdown } from '@/services/analytics/models/analytics.interface';
 import StatTile from './StatTile';
-import { formatCompactNumber, formatCurrency, formatPercent } from './utils/format';
+import MetricCard from './components/MetricCard';
+import {
+	AnalyticsError,
+	AnalyticsLoading,
+	StatTileGroup,
+} from './components/AnalyticsStates';
+import { useAnalyticsResource } from './hooks/useAnalyticsResource';
+import type { IAnalyticsViewProps } from './models/analytics-view-props.interface';
+import { CHANNEL_LABELS, labelFor } from './utils/analytics-scope';
+import { describeRange } from './utils/analytics-range';
+import {
+	formatCurrency,
+	formatCurrencyCompact,
+	formatInteger,
+} from './utils/format';
 
-const CHANNEL_LABELS: Record<string, string> = {
-	ONLINE: 'Tienda Online',
-	POS: 'Punto de Venta',
-};
+const AnalyticsSalesBreakdown = ({ range }: IAnalyticsViewProps) => {
+	const load = useCallback(
+		() =>
+			analyticsGetService.getSalesBreakdown({
+				dateFrom: range.dateFrom,
+				dateTo: range.dateTo,
+				timezone: range.timezone,
+			}),
+		[range.dateFrom, range.dateTo, range.timezone]
+	);
 
-const AnalyticsSalesBreakdown = () => {
-	const [loading, setLoading] = useState(true);
-	const [data, setData] = useState<ISalesBreakdown | null>(null);
+	const breakdown = useAnalyticsResource(load);
 
-	const getData = async () => {
-		setLoading(true);
-		try {
-			const result = await analyticsGetService.getSalesBreakdown();
-			setData(result);
-		} catch (error) {
-			console.error('Error fetching sales breakdown:', error);
-			toast.error('No se pudo cargar la distribución de ventas.');
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	useEffect(() => {
-		getData();
-	}, []);
-
-	if (loading) {
+	if (breakdown.status === 'loading') {
 		return (
-			<div className='grid grid-cols-2 md:grid-cols-4 gap-4 p-4'>
-				{Array.from({ length: 4 }).map((_, index) => (
-					<Skeleton key={index} className='h-24 w-full rounded-xl' />
-				))}
-			</div>
+			<AnalyticsLoading
+				tiles={4}
+				label='Cargando la distribución de ventas…'
+			/>
 		);
 	}
 
-	if (!data) {
+	if (breakdown.status === 'error' || !breakdown.data) {
 		return (
-			<div className='w-full p-8 text-center text-sm text-aromas_gray_text/70'>
-				No se pudo cargar la distribución de ventas.
-			</div>
+			<AnalyticsError
+				message='No pudimos cargar la distribución de ventas.'
+				onRetry={breakdown.retry}
+			/>
 		);
 	}
 
-	const { totals, byChannel, byPaymentMethod, matrix } = data;
+	const { totals, byChannel, byPaymentMethod, matrix } = breakdown.data;
+	const isStale = breakdown.status === 'refreshing';
+
+	/*
+	 * The matrix arrives as a flat list of populated cells. Pivoting it against
+	 * the two marginals keeps a combination that never happened visible as an
+	 * explicit "sin datos" instead of silently missing from the grid.
+	 */
+	const channels = byChannel.map((row) => row.channel);
+	const methods = byPaymentMethod.map((row) => row.name);
+	const matrixValues = channels.map((channel) =>
+		methods.map((method) => {
+			const cell = matrix.find(
+				(one) => one.channel === channel && one.name === method
+			);
+			return cell ? cell.revenue : null;
+		})
+	);
 
 	return (
-		<div className='w-full flex flex-col gap-4 p-4'>
-			<div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+		<div className='flex flex-col gap-4'>
+			<StatTileGroup className='xl:grid-cols-4'>
 				<StatTile
 					label='Órdenes'
-					value={formatCompactNumber(totals.orders)}
+					value={formatInteger(totals.orders)}
+					scope='range'
 				/>
 				<StatTile
 					label='Ingresos'
 					value={formatCurrency(totals.revenue)}
+					scope='range'
 				/>
 				<StatTile
 					label='Órdenes pagadas'
-					value={formatCompactNumber(totals.paidOrders)}
+					value={formatInteger(totals.paidOrders)}
+					scope='range'
 				/>
 				<StatTile
 					label='Ingresos cobrados'
 					value={formatCurrency(totals.paidRevenue)}
+					scope='range'
 				/>
+			</StatTileGroup>
+
+			<div className='grid grid-cols-1 gap-4 xl:grid-cols-2'>
+				<MetricCard
+					title='Por canal'
+					description='Cuánto pesa el mostrador frente a la tienda online.'
+					scope='range'>
+					<ShareBar
+						title='Ingresos por canal'
+						segments={byChannel.map((row) => ({
+							key: row.channel,
+							label: labelFor(CHANNEL_LABELS, row.channel),
+							value: row.revenue,
+						}))}
+						valueLabel='Ingresos'
+						categoryLabel='Canal'
+						formatValue={formatCurrency}
+						summary={`Reparto de ${formatCurrency(
+							totals.revenue
+						)} de ingresos por canal entre ${describeRange(range)}.`}
+						footnote='Las órdenes anteriores al campo "canal" cuentan como tienda online. Las ventas de mostrador no tienen costo de envío.'
+						emptyMessage='Todavía no hay ventas en este período.'
+						isStale={isStale}
+					/>
+				</MetricCard>
+
+				<MetricCard
+					title='Por método de pago'
+					description='Con qué paga la gente.'
+					scope='range'>
+					<ShareBar
+						title='Ingresos por método de pago'
+						segments={byPaymentMethod.map((row) => ({
+							key: row.paymentMethodId ?? row.name,
+							label: row.name,
+							value: row.revenue,
+						}))}
+						valueLabel='Ingresos'
+						categoryLabel='Método'
+						formatValue={formatCurrency}
+						summary={`Reparto de ${formatCurrency(
+							totals.revenue
+						)} de ingresos por método de pago entre ${describeRange(
+							range
+						)}.`}
+						emptyMessage='Todavía no hay pagos en este período.'
+						isStale={isStale}
+					/>
+				</MetricCard>
 			</div>
 
-			<div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-				<Card>
-					<CardHeader>
-						<CardTitle>Por canal</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead>Canal</TableHead>
-									<TableHead className='text-right'>Órdenes</TableHead>
-									<TableHead className='text-right'>Ingresos</TableHead>
-									<TableHead className='text-right'>%</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{byChannel.map((row) => (
-									<TableRow key={row.channel}>
-										<TableCell className='font-medium'>
-											{CHANNEL_LABELS[row.channel] ??
-												row.channel}
-										</TableCell>
-										<TableCell className='text-right'>
-											{row.orders}
-										</TableCell>
-										<TableCell className='text-right'>
-											{formatCurrency(row.revenue)}
-										</TableCell>
-										<TableCell className='text-right'>
-											{formatPercent(row.share)}
-										</TableCell>
-									</TableRow>
-								))}
-							</TableBody>
-						</Table>
-					</CardContent>
-				</Card>
-
-				<Card>
-					<CardHeader>
-						<CardTitle>Por método de pago</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead>Método</TableHead>
-									<TableHead className='text-right'>Órdenes</TableHead>
-									<TableHead className='text-right'>Ingresos</TableHead>
-									<TableHead className='text-right'>%</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{byPaymentMethod.map((row) => (
-									<TableRow
-										key={row.paymentMethodId ?? row.name}>
-										<TableCell className='font-medium'>
-											{row.name}
-										</TableCell>
-										<TableCell className='text-right'>
-											{row.orders}
-										</TableCell>
-										<TableCell className='text-right'>
-											{formatCurrency(row.revenue)}
-										</TableCell>
-										<TableCell className='text-right'>
-											{formatPercent(row.share)}
-										</TableCell>
-									</TableRow>
-								))}
-							</TableBody>
-						</Table>
-					</CardContent>
-				</Card>
-			</div>
-
-			<Card>
-				<CardHeader>
-					<CardTitle>Canal x método de pago</CardTitle>
-				</CardHeader>
-				<CardContent>
-					{matrix.length === 0 ? (
-						<span className='text-sm text-aromas_gray_text/70'>
-							Sin datos.
-						</span>
-					) : (
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead>Canal</TableHead>
-									<TableHead>Método</TableHead>
-									<TableHead className='text-right'>Órdenes</TableHead>
-									<TableHead className='text-right'>Ingresos</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{matrix.map((cell) => (
-									<TableRow
-										key={`${cell.channel}-${cell.paymentMethodId ?? cell.name}`}>
-										<TableCell>
-											{CHANNEL_LABELS[cell.channel] ??
-												cell.channel}
-										</TableCell>
-										<TableCell>{cell.name}</TableCell>
-										<TableCell className='text-right'>
-											{cell.orders}
-										</TableCell>
-										<TableCell className='text-right'>
-											{formatCurrency(cell.revenue)}
-										</TableCell>
-									</TableRow>
-								))}
-							</TableBody>
-						</Table>
+			<MetricCard
+				title='Canal por método de pago'
+				description='La grilla que hace falta para cerrar la caja: cada cruce con sus ingresos.'
+				scope='range'>
+				<HeatmapChart
+					title='Ingresos por canal y método de pago'
+					rowHeader='Canal'
+					rowLabels={channels.map((channel) =>
+						labelFor(CHANNEL_LABELS, channel)
 					)}
-				</CardContent>
-			</Card>
+					columnLabels={methods}
+					values={matrixValues}
+					formatValue={formatCurrency}
+					formatCell={formatCurrencyCompact}
+					summary={`Ingresos por cada cruce de canal y método de pago entre ${describeRange(
+						range
+					)}. Cada celda muestra su valor; el color sólo refuerza la magnitud.`}
+					footnote='Los porcentajes redondeados pueden sumar 99,99 % o 100,01 % en lugar de 100 %.'
+					emptyMessage='Todavía no hay cruces con ventas en este período.'
+					isStale={isStale}
+				/>
+			</MetricCard>
 		</div>
 	);
 };

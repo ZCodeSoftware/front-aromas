@@ -9,5 +9,7 @@ export const putProduct = async (
 		await AppApiGateWay.put(`/product/${id}`, product);
 	} catch (error) {
 		console.error('Error al modificar producto', error);
+		// Rethrown so the caller can tell the user it failed instead of reporting success.
+		throw error;
 	}
 };

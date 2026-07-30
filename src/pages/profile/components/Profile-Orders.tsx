@@ -141,7 +141,7 @@ const ProfileOrders = () => {
 						className='w-full border-b border-aromas_gray_line pb-6 last:border-none'>
 						<div className='flex flex-col text-sm mb-4'>
 							<div className='flex justify-between items-center'>
-								<p className='font-semibold'>{`Pedido #${order._id.slice(-6).toUpperCase()}`}</p>
+								<p className='font-semibold'>{`Pedido #${order.orderNumber}`}</p>
 								<Badge className={statusStyle(order.status)}>
 									{order.status.name}
 								</Badge>
