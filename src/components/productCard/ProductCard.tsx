@@ -9,9 +9,10 @@ import {
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useCartStore } from '@/stores/cart.store';
+import CardPrice from './components/CardPrice';
 import type { IProductCardProps } from './models/product-card.interface';
 
-const ProductCard = ({ product }: IProductCardProps) => {
+const ProductCard = ({ product, pricing }: IProductCardProps) => {
 	const addItem = useCartStore((state) => state.addItem);
 
 	const handleAddToCart = async () => {
@@ -79,9 +80,9 @@ const ProductCard = ({ product }: IProductCardProps) => {
 						<CardTitle className='text-lg font-bold text-aromas_gray_text'>
 							{product.name}
 						</CardTitle>
-						<p className='text-lg font-bold text-aromas_fucsia whitespace-nowrap pl-4'>
-							${product.price}
-						</p>
+						<CardPrice
+							pricing={pricing ?? { finalPrice: product.price }}
+						/>
 					</div>
 					<CardDescription
 						ref={descriptionRef}

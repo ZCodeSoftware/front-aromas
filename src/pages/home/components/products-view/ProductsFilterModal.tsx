@@ -18,27 +18,15 @@ const FilterSection: React.FC<IFilterSectionProps> = ({
 	options,
 	selected,
 	onToggle,
-	valueKey,
-	labelKey,
 }) => (
 	<div className='mb-6'>
 		<h3 className='text-md font-semibold text-gray-700 mb-3'>{title}</h3>
 		<div className='flex flex-wrap gap-2'>
 			{options.map((option, index) => {
-				let value: string;
-				let label: string;
-				if (
-					typeof option === 'object' &&
-					option !== null &&
-					valueKey &&
-					labelKey
-				) {
-					value = option[valueKey];
-					label = option[labelKey];
-				} else {
-					value = String(option);
-					label = String(option);
-				}
+				const isCatalogueRow = typeof option === 'object' && option !== null;
+				const value = isCatalogueRow ? option._id : String(option);
+				const label = isCatalogueRow ? option.name : String(option);
+
 				return (
 					<button
 						key={`${value}-${index}`}
@@ -240,8 +228,6 @@ export const ProductFilterModal: React.FC<IProductFilterModalProps> = ({
 						onToggle={(val) =>
 							handleMultiSelectToggle('categoryId', val)
 						}
-						valueKey='_id'
-						labelKey='name'
 					/>
 					<FilterSection
 						title='Aromas'
@@ -250,8 +236,6 @@ export const ProductFilterModal: React.FC<IProductFilterModalProps> = ({
 						onToggle={(val) =>
 							handleMultiSelectToggle('essenceId', val)
 						}
-						valueKey='_id'
-						labelKey='name'
 					/>
 					<FilterSection
 						title='Colores'
@@ -260,8 +244,6 @@ export const ProductFilterModal: React.FC<IProductFilterModalProps> = ({
 						onToggle={(val) =>
 							handleMultiSelectToggle('colorId', val)
 						}
-						valueKey='_id'
-						labelKey='name'
 					/>
 					<div className='mb-6'>
 						<h3 className='text-md font-semibold text-gray-700 mb-3'>

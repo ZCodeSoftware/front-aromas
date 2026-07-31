@@ -1,11 +1,12 @@
 import axios, { isAxiosError } from 'axios';
-import type { IProductForm } from '../dashboardProducts/createProduct/models/product-form.interface';
 import { toast } from 'sonner';
 
 const uploadToCloudinary = async (
 	file: Blob[],
 	folderName: string,
-	form: IProductForm
+	// Only the name is read, to build the Cloudinary folder. Kept structural so
+	// any form with a name can upload, not just the product one.
+	form: { name: string }
 ) => {
 	const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 	const uploadPreset = import.meta.env.VITE_CLOUDINARY_CLOUD_PRESET;

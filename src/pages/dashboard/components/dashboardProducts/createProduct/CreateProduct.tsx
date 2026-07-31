@@ -21,6 +21,7 @@ import { associatedEmotionsGetService } from '@/services/catalogs/associated-emo
 import { brandsGetService } from '@/services/catalogs/brand/GET/brands.service.get';
 import { essencesGetService } from '@/services/catalogs/essences/GET/essences.service.get';
 import { postProduct } from '@/services/products/POST/products.service.post';
+import { getApiErrorMessage } from '@/services/auth/utils/get-api-error-message';
 import UploadImage from '../../uploadImage/UploadImage';
 import uploadToCloudinary from '../../uploadImage/uploadImageToCloudinary';
 import type { ICategory } from '@/services/catalogs/categories/models/categories.interface';
@@ -211,7 +212,7 @@ const CreateProduct: React.FC = () => {
 			});
 		} catch (error) {
 			console.error('Error creating product:', error);
-			toast.error('Error al crear el producto');
+			toast.error(getApiErrorMessage(error, 'Error al crear el producto'));
 		} finally {
 			setButtonLoading(false);
 		}

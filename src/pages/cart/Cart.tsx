@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react';
 import { useClickOutside } from '@/hooks/useClickOutside';
-import { useCartStore } from '@/stores/cart.store';
+import {
+	cartLineImage,
+	cartLineName,
+	useCartStore,
+} from '@/stores/cart.store';
 import { useAuthStore } from '@/stores/auth.store';
 import { useModalStore } from '@/stores/modal.store';
 import CartCheckout from './components/CartCheckout';
@@ -93,74 +97,100 @@ const Cart: React.FC<ICartProps> = ({ onClose }) => {
 								</div>
 							) : (
 								<ul className='flex flex-col gap-y-6'>
-									{items.map((item) => (
-										<li
-											key={item.product._id}
-											className='flex gap-x-4'>
-											<img
-												src={item.product.images[0]}
-												alt={item.product.name}
-												className='w-16 h-16 rounded-lg object-cover bg-aromas_home_bg'
-											/>
-											<div className='flex-1 flex flex-col gap-y-1'>
-												<div className='flex items-start justify-between gap-x-2'>
-													<p className='font-bold text-aromas_gray_text'>
-														{item.product.name}
+									{items.map((item) => {
+										const name = cartLineName(item);
+										const image = cartLineImage(item);
+
+										return (
+											<li key={item.key} className='flex gap-x-4'>
+												{image ? (
+													<img
+														src={image}
+														alt={name}
+														className='w-16 h-16 rounded-lg object-cover bg-aromas_home_bg'
+													/>
+												) : (
+													// A combo may be published before
+													// its photo exists.
+													<div className='flex h-16 w-16 items-center justify-center rounded-lg bg-aromas_pink/20'>
+														<ShoppingBag className='h-6 w-6 text-aromas_fucsia' />
+													</div>
+												)}
+												<div className='flex-1 flex flex-col gap-y-1'>
+													<div className='flex items-start justify-between gap-x-2'>
+														<p className='font-bold text-aromas_gray_text'>
+															{name}
+															{item.itemType ===
+																'COMBO' && (
+																<span className='ml-2 rounded bg-aromas_fucsia px-1.5 py-0.5 text-xs font-bold text-white'>
+																	COMBO
+																</span>
+															)}
+														</p>
+														<button
+															aria-label={`Quitar ${name}`}
+															onClick={() =>
+																removeItem(item.key)
+															}
+															className='text-aromas_fucsia hover:text-red-600 transition-colors'>
+															<Trash2 className='h-5 w-5' />
+														</button>
+													</div>
+													<p className='text-aromas_fucsia font-semibold'>
+														${item.unitPrice.toFixed(2)}
 													</p>
-													<button
-														onClick={() =>
-															removeItem(
-																item.product
-																	._id,
-															)
-														}
-														className='text-aromas_fucsia hover:text-red-600 transition-colors'>
-														<Trash2 className='h-5 w-5' />
-													</button>
+													<div className='flex items-center gap-x-3'>
+														<button
+															aria-label={`Quitar una unidad de ${name}`}
+															onClick={() =>
+																decrementQuantity(
+																	item.key
+																)
+															}
+															className='p-1 rounded-full text-aromas_fucsia hover:bg-aromas_pink/20'>
+															<Minus className='h-4 w-4' />
+														</button>
+														<span className='text-aromas_gray_text'>
+															{item.quantity}
+														</span>
+														<button
+															aria-label={`Agregar una unidad de ${name}`}
+															onClick={() =>
+																incrementQuantity(
+																	item.key
+																)
+															}
+															className='p-1 rounded-full text-aromas_fucsia hover:bg-aromas_pink/20'>
+															<Plus className='h-4 w-4' />
+														</button>
+													</div>
 												</div>
-												<p className='text-aromas_fucsia font-semibold'>
-													${item.unitPrice.toFixed(2)}
-												</p>
-												<div className='flex items-center gap-x-3'>
-													<button
-														onClick={() =>
-															decrementQuantity(
-																item.product
-																	._id,
-															)
-														}
-														className='p-1 rounded-full text-aromas_fucsia hover:bg-aromas_pink/20'>
-														<Minus className='h-4 w-4' />
-													</button>
-													<span className='text-aromas_gray_text'>
-														{item.quantity}
-													</span>
-													<button
-														onClick={() =>
-															incrementQuantity(
-																item.product
-																	._id,
-															)
-														}
-														className='p-1 rounded-full text-aromas_fucsia hover:bg-aromas_pink/20'>
-														<Plus className='h-4 w-4' />
-													</button>
-												</div>
-											</div>
-										</li>
-									))}
+											</li>
+										);
+									})}
 								</ul>
 							)}
 						</main>
 
 						<footer className='border-t-2 border-aromas_gray_line p-4 flex flex-col gap-y-4'>
-							<div className='flex items-center justify-between'>
-								<h3 className='text-lg font-bold text-aromas_gray_text'>
-									Total
-								</h3>
-								<p className='text-lg font-bold text-aromas_fucsia'>
-									${getTotalPrice().toFixed(2)}
-								</p>
+							<div className='flex flex-col gap-y-1'>
+								<div className='flex items-center justify-between'>
+									<h3 className='text-lg font-bold text-aromas_gray_text'>
+										Total
+									</h3>
+									<p className='text-lg font-bold text-aromas_fucsia'>
+										${getTotalPrice().toFixed(2)}
+									</p>
+								</div>
+								{items.length > 0 && (
+									// The gross sum, on purpose: only the server can
+									// price promotions and coupons, and it does so on
+									// the checkout step right after this.
+									<p className='text-xs text-aromas_gray_text'>
+										Los descuentos y cupones se calculan al
+										finalizar la compra.
+									</p>
+								)}
 							</div>
 							<button
 								onClick={handleCheckoutClick}

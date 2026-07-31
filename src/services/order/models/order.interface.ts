@@ -23,12 +23,43 @@ export interface IOrderItemProduct {
 	images: string[];
 }
 
-export interface IOrderItem {
+export type IOrderItemType = 'PRODUCT' | 'COMBO';
+
+/** One component of a purchased combo, as snapshotted on the line. */
+export interface IOrderItemComponent {
 	product: IOrderItemProduct | null;
+	name: string;
+	/** Units per single combo, not per order line. */
+	quantity: number;
+	unitPrice: number;
+}
+
+/** Which promotion took how much off, snapshotted so history never changes. */
+export interface IOrderAppliedPromotion {
+	promotion: string;
+	code?: string | null;
+	name: string;
+	valueType: 'PERCENTAGE' | 'FIXED';
+	value: number;
+	scope: string;
+	discount: number;
+}
+
+export interface IOrderItem {
+	/** Missing on orders placed before combos existed; reads treat that as PRODUCT. */
+	itemType?: IOrderItemType;
+	product: IOrderItemProduct | null;
+	combo?: IOrderItemProduct | null;
+	components?: IOrderItemComponent[];
 	name: string;
 	unitPrice: number;
 	quantity: number;
+	/** Gross line amount, before any discount. */
 	total: number;
+	discount?: number;
+	/** `total - discount`. Absent on orders placed before discounts existed. */
+	netTotal?: number;
+	appliedPromotions?: IOrderAppliedPromotion[];
 }
 
 export interface IOrderPaymentMethod {
@@ -66,7 +97,13 @@ export interface IOrder {
 	/** Consecutive number shown to the customer, assigned by the API. */
 	orderNumber: number;
 	items: IOrderItem[];
+	/** Gross sum of the lines, before discounts. */
 	subTotalPrice: number;
+	/** Absent on orders placed before discounts existed. */
+	discountTotal?: number;
+	appliedPromotions?: IOrderAppliedPromotion[];
+	/** The coupon code actually redeemed, if any. */
+	coupon?: string | null;
 	shippingPrice: number;
 	totalPrice: number;
 	paymentMethod: IOrderPaymentMethod | null;
@@ -99,4 +136,6 @@ export interface ICreateOrderPayload {
 	shippingType: IShippingType;
 	addressId?: string;
 	shippingPrice?: number;
+	/** A code that cannot be applied fails the request, unlike in the preview. */
+	couponCode?: string;
 }

@@ -6,6 +6,11 @@ const removeItem = async (productId: string): Promise<ICart> => {
 	return response.data;
 };
 
+const removeCombo = async (comboId: string): Promise<ICart> => {
+	const response = await AppApiGateWay.delete(`/cart/combo-items/${comboId}`);
+	return response.data;
+};
+
 const clearCart = async (): Promise<ICart> => {
 	const response = await AppApiGateWay.delete('/cart');
 	return response.data;
@@ -13,5 +18,6 @@ const clearCart = async (): Promise<ICart> => {
 
 export const cartDeleteService = {
 	removeItem,
+	removeCombo,
 	clearCart,
 };

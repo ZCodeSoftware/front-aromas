@@ -4,6 +4,10 @@ import type { IDashboardItem } from './models/dashboard-items.interface';
 import DashboardHome from './components/dashboardHome/DashboardHome';
 import DashboardProducts from './components/dashboardProducts/productssList/DashboardProductsList';
 import DashboardCreateProduct from './components/dashboardProducts/createProduct/DashboardCreateProduct';
+import DashboardCombosList from './components/dashboardCombos/combosList/DashboardCombosList';
+import DashboardCreateCombo from './components/dashboardCombos/createCombo/DashboardCreateCombo';
+import DashboardPromotionsList from './components/dashboardPromotions/promotionsList/DashboardPromotionsList';
+import DashboardCreatePromotion from './components/dashboardPromotions/createPromotion/DashboardCreatePromotion';
 import Sidebar from './components/Sidebar';
 import DashboardCatalogsList from './components/dashboardCatalogs/catalogsList/DashboardCatalogList';
 import DashboardCreateCatalogs from './components/dashboardCatalogs/createCatalogs/DashboardCreate';
@@ -36,6 +40,38 @@ const Dashboard: React.FC = () => {
 					id: 'create-product',
 					name: 'Crear Producto',
 					component: <DashboardCreateProduct />,
+				},
+			],
+		},
+		{
+			id: 'combos',
+			name: 'Combos',
+			subItems: [
+				{
+					id: 'combo-list',
+					name: 'Lista de Combos',
+					component: <DashboardCombosList />,
+				},
+				{
+					id: 'create-combo',
+					name: 'Crear Combo',
+					component: <DashboardCreateCombo />,
+				},
+			],
+		},
+		{
+			id: 'promotions',
+			name: 'Promociones',
+			subItems: [
+				{
+					id: 'promotion-list',
+					name: 'Lista de Promociones',
+					component: <DashboardPromotionsList />,
+				},
+				{
+					id: 'create-promotion',
+					name: 'Crear Promoción',
+					component: <DashboardCreatePromotion />,
 				},
 			],
 		},

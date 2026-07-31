@@ -12,28 +12,60 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { productsGetService } from '@/services/products/GET/products.service.get';
+import { combosGetService } from '@/services/combos/GET/combos.service.get';
 import { paymentMethodGetService } from '@/services/catalogs/payment-method/GET/payment-method.service.get';
 import { posPostService } from '@/services/pos/POST/pos.service.post';
+import { pricingPostService } from '@/services/pricing/POST/pricing.service.post';
 import { getApiErrorMessage } from '@/services/auth/utils/get-api-error-message';
 import type { IProductData } from '@/services/products/models/products.interface';
+import type { IComboData } from '@/services/combos/models/combos.interface';
+import type { IPricingResult } from '@/services/pricing/models/pricing.interface';
 import type { IPaymentMethod } from '@/services/catalogs/payment-method/models/payment-method.interface';
 
+type SaleItemKind = 'product' | 'combo';
+
+/**
+ * A line of the sale. Products and combos are kept apart by `kind`, because their
+ * ids come from different collections and the API needs to be told which is which.
+ */
 interface ISaleLine {
-	product: IProductData;
+	kind: SaleItemKind;
+	_id: string;
+	name: string;
+	price: number;
+	/** Units on hand, so the operator sees what is left before adding more. */
+	stock: number;
 	quantity: number;
 }
 
+/** Either search result, flattened to what a line needs. */
+const toLine = (
+	kind: SaleItemKind,
+	item: IProductData | IComboData,
+	quantity: number
+): ISaleLine => ({
+	kind,
+	_id: item._id,
+	name: item.name,
+	price: item.price,
+	stock: item.stock,
+	quantity,
+});
+
 const RegisterSale: React.FC = () => {
+	const [searchKind, setSearchKind] = useState<SaleItemKind>('product');
 	const [searchTerm, setSearchTerm] = useState('');
-	const [searchResults, setSearchResults] = useState<IProductData[]>([]);
+	const [searchResults, setSearchResults] = useState<ISaleLine[]>([]);
 	const [searching, setSearching] = useState(false);
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-	const [selectedProduct, setSelectedProduct] = useState<IProductData | null>(
-		null,
-	);
+	const [selectedItem, setSelectedItem] = useState<ISaleLine | null>(null);
 	const [quantity, setQuantity] = useState(1);
 
 	const [lines, setLines] = useState<ISaleLine[]>([]);
+
+	const [couponCode, setCouponCode] = useState('');
+	const [pricing, setPricing] = useState<IPricingResult | null>(null);
+	const [pricingLoading, setPricingLoading] = useState(false);
 
 	const [paymentMethods, setPaymentMethods] = useState<IPaymentMethod[]>([]);
 	const [paymentMethod, setPaymentMethod] = useState('');
@@ -60,7 +92,7 @@ const RegisterSale: React.FC = () => {
 	useEffect(() => {
 		if (
 			searchTerm.trim().length < 2 ||
-			(selectedProduct && searchTerm === selectedProduct.name)
+			(selectedItem && searchTerm === selectedItem.name)
 		) {
 			setSearchResults([]);
 			return;
@@ -69,25 +101,84 @@ const RegisterSale: React.FC = () => {
 		const timeout = setTimeout(async () => {
 			setSearching(true);
 			try {
-				const result = await productsGetService.getProducts({
-					search: searchTerm,
-					isActive: true,
-					limit: 10,
-				});
-				setSearchResults(result?.data ?? []);
+				if (searchKind === 'combo') {
+					const result = await combosGetService.getCombos({
+						search: searchTerm,
+						isActive: true,
+						limit: 10,
+					});
+					setSearchResults(
+						(result?.data ?? []).map((combo) =>
+							toLine('combo', combo, 1)
+						)
+					);
+				} else {
+					const result = await productsGetService.getProducts({
+						search: searchTerm,
+						isActive: true,
+						limit: 10,
+					});
+					setSearchResults(
+						(result?.data ?? []).map((product) =>
+							toLine('product', product, 1)
+						)
+					);
+				}
 			} catch {
-				toast.error('No se pudieron buscar productos.');
+				toast.error(
+					searchKind === 'combo'
+						? 'No se pudieron buscar combos.'
+						: 'No se pudieron buscar productos.'
+				);
 			} finally {
 				setSearching(false);
 			}
 		}, 400);
 
 		return () => clearTimeout(timeout);
-	}, [searchTerm, selectedProduct]);
+	}, [searchTerm, selectedItem, searchKind]);
 
-	const total = lines.reduce(
-		(sum, line) => sum + line.product.price * line.quantity,
-		0,
+	/**
+	 * The quote comes from the backend so the counter charges exactly what the
+	 * storefront would. Re-run whenever the lines or the coupon change; the gross
+	 * sum below is only the fallback while it is in flight.
+	 */
+	useEffect(() => {
+		if (!lines.length) {
+			setPricing(null);
+			return;
+		}
+
+		const timeout = setTimeout(async () => {
+			setPricingLoading(true);
+			try {
+				setPricing(
+					await pricingPostService.previewPosSale({
+						items: lines.map((line) =>
+							line.kind === 'combo'
+								? { comboId: line._id, quantity: line.quantity }
+								: { productId: line._id, quantity: line.quantity }
+						),
+						couponCode: couponCode.trim() || undefined,
+					})
+				);
+			} catch (error) {
+				setPricing(null);
+				toast.error(
+					getApiErrorMessage(error, 'No se pudo calcular el total.')
+				);
+			} finally {
+				setPricingLoading(false);
+			}
+		}, 300);
+
+		return () => clearTimeout(timeout);
+	}, [lines, couponCode]);
+
+	/** Gross sum, shown only until the backend answers with the real total. */
+	const grossTotal = lines.reduce(
+		(sum, line) => sum + line.price * line.quantity,
+		0
 	);
 
 	const resetForm = () => {
@@ -95,19 +186,28 @@ const RegisterSale: React.FC = () => {
 		setPaymentMethod('');
 		setSearchTerm('');
 		setSearchResults([]);
-		setSelectedProduct(null);
+		setSelectedItem(null);
 		setQuantity(1);
+		setCouponCode('');
+		setPricing(null);
 	};
 
-	const handleSelectProduct = (product: IProductData) => {
-		setSelectedProduct(product);
-		setSearchTerm(product.name);
+	const handleSelectItem = (item: ISaleLine) => {
+		setSelectedItem(item);
+		setSearchTerm(item.name);
 		setIsDropdownOpen(false);
 	};
 
+	const handleChangeKind = (kind: SaleItemKind) => {
+		setSearchKind(kind);
+		setSelectedItem(null);
+		setSearchTerm('');
+		setSearchResults([]);
+	};
+
 	const handleAddLine = () => {
-		if (!selectedProduct) {
-			toast.error('Seleccioná un producto para agregar.');
+		if (!selectedItem) {
+			toast.error('Seleccioná un producto o combo para agregar.');
 			return;
 		}
 		if (quantity < 1) {
@@ -116,28 +216,34 @@ const RegisterSale: React.FC = () => {
 		}
 
 		setLines((prev) => {
+			// Matched on kind as well as id: a product and a combo may share an id
+			// and must never be merged into one line.
 			const existing = prev.find(
-				(line) => line.product._id === selectedProduct._id,
+				(line) =>
+					line._id === selectedItem._id && line.kind === selectedItem.kind
 			);
 			if (existing) {
 				return prev.map((line) =>
-					line.product._id === selectedProduct._id
+					line._id === selectedItem._id && line.kind === selectedItem.kind
 						? { ...line, quantity: line.quantity + quantity }
-						: line,
+						: line
 				);
 			}
-			return [...prev, { product: selectedProduct, quantity }];
+			return [...prev, { ...selectedItem, quantity }];
 		});
 
-		setSelectedProduct(null);
+		setSelectedItem(null);
 		setSearchTerm('');
 		setSearchResults([]);
 		setQuantity(1);
 	};
 
-	const handleRemoveLine = (productId: string) => {
+	const handleRemoveLine = (line: ISaleLine) => {
 		setLines((prev) =>
-			prev.filter((line) => line.product._id !== productId),
+			prev.filter(
+				(current) =>
+					!(current._id === line._id && current.kind === line.kind)
+			)
 		);
 	};
 
@@ -152,15 +258,21 @@ const RegisterSale: React.FC = () => {
 			toast.error('Seleccioná un método de pago.');
 			return;
 		}
+		if (pricing?.couponError) {
+			toast.error(pricing.couponError);
+			return;
+		}
 
 		setSubmitting(true);
 		try {
 			await posPostService.registerSale({
-				items: lines.map((line) => ({
-					productId: line.product._id,
-					quantity: line.quantity,
-				})),
+				items: lines.map((line) =>
+					line.kind === 'combo'
+						? { comboId: line._id, quantity: line.quantity }
+						: { productId: line._id, quantity: line.quantity }
+				),
 				paymentMethod,
+				couponCode: couponCode.trim() || undefined,
 			});
 			toast.success('Venta registrada con éxito.');
 			resetForm();
@@ -182,18 +294,38 @@ const RegisterSale: React.FC = () => {
 			</CardHeader>
 			<CardContent>
 				<form onSubmit={handleSubmit} className='space-y-6'>
-					<div className='grid grid-cols-1 md:grid-cols-[1fr_140px_auto] gap-3 items-start'>
+					<div className='grid grid-cols-1 md:grid-cols-[150px_1fr_140px_auto] gap-3 items-start'>
+						<div data-tutorial='pos-kind' className='grid gap-1.5'>
+							<label htmlFor='searchKind'>Vender</label>
+							<Select
+								value={searchKind}
+								onValueChange={(value) =>
+									handleChangeKind(value as SaleItemKind)
+								}>
+								<SelectTrigger id='searchKind'>
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent className='bg-white'>
+									<SelectItem value='product'>Producto</SelectItem>
+									<SelectItem value='combo'>Combo</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
 						<div
 							data-tutorial='pos-search'
 							className='relative grid gap-1.5'>
-							<label htmlFor='search'>Buscar producto</label>
+							<label htmlFor='search'>
+								{searchKind === 'combo'
+									? 'Buscar combo'
+									: 'Buscar producto'}
+							</label>
 							<Input
 								id='search'
 								autoComplete='off'
 								value={searchTerm}
 								onChange={(e) => {
 									setSearchTerm(e.target.value);
-									setSelectedProduct(null);
+									setSelectedItem(null);
 									setIsDropdownOpen(true);
 								}}
 								onFocus={() => setIsDropdownOpen(true)}
@@ -203,7 +335,11 @@ const RegisterSale: React.FC = () => {
 										150,
 									)
 								}
-								placeholder='Nombre del producto'
+								placeholder={
+									searchKind === 'combo'
+										? 'Nombre del combo'
+										: 'Nombre del producto'
+								}
 							/>
 							{isDropdownOpen &&
 								searchTerm.trim().length >= 2 && (
@@ -214,26 +350,27 @@ const RegisterSale: React.FC = () => {
 											</p>
 										) : searchResults.length === 0 ? (
 											<p className='px-3 py-2 text-sm text-aromas_gray_text'>
-												No se encontraron productos.
+												{searchKind === 'combo'
+													? 'No se encontraron combos.'
+													: 'No se encontraron productos.'}
 											</p>
 										) : (
 											<ul className='max-h-60 overflow-y-auto'>
-												{searchResults.map(
-													(product) => (
-														<li key={product._id}>
-															<button
-																type='button'
-																onMouseDown={() =>
-																	handleSelectProduct(
-																		product,
-																	)
-																}
-																className='w-full px-3 py-2 text-left text-sm hover:bg-aromas_pink/20'>
-																{`${product.name} — $${product.price.toFixed(2)} (stock: ${product.stock})`}
-															</button>
-														</li>
-													),
-												)}
+												{searchResults.map((item) => (
+													<li
+														key={`${item.kind}:${item._id}`}>
+														<button
+															type='button'
+															onMouseDown={() =>
+																handleSelectItem(
+																	item,
+																)
+															}
+															className='w-full px-3 py-2 text-left text-sm hover:bg-aromas_pink/20'>
+															{`${item.name} — $${item.price.toFixed(2)} (stock: ${item.stock})`}
+														</button>
+													</li>
+												))}
 											</ul>
 										)}
 									</div>
@@ -256,7 +393,7 @@ const RegisterSale: React.FC = () => {
 						<Button
 							type='button'
 							onClick={handleAddLine}
-							disabled={!selectedProduct}
+							disabled={!selectedItem}
 							data-tutorial='pos-add'
 							className='mt-6 bg-aromas_pink text-aromas_gray_text'>
 							<Plus className='mr-2 h-4 w-4' />
@@ -274,31 +411,32 @@ const RegisterSale: React.FC = () => {
 						) : (
 							lines.map((line) => (
 								<div
-									key={line.product._id}
+									key={`${line.kind}:${line._id}`}
 									className='flex items-center justify-between gap-x-4 px-4 py-3'>
 									<div className='flex min-w-0 flex-col'>
 										<p className='truncate font-medium text-aromas_gray_text'>
-											{line.product.name}
+											{line.name}
+											{line.kind === 'combo' && (
+												<span className='ml-2 rounded bg-aromas_fucsia px-1.5 py-0.5 text-xs text-white'>
+													COMBO
+												</span>
+											)}
 										</p>
 										<p className='text-sm text-aromas_gray_text'>
-											{`${line.quantity} x $${line.product.price.toFixed(2)}`}
+											{`${line.quantity} x $${line.price.toFixed(2)}`}
 										</p>
 									</div>
 									<div className='flex shrink-0 items-center gap-x-4'>
 										<p className='font-semibold text-aromas_fucsia'>
 											$
-											{(
-												line.product.price *
-												line.quantity
-											).toFixed(2)}
+											{(line.price * line.quantity).toFixed(
+												2,
+											)}
 										</p>
 										<button
 											type='button'
-											onClick={() =>
-												handleRemoveLine(
-													line.product._id,
-												)
-											}
+											aria-label={`Quitar ${line.name}`}
+											onClick={() => handleRemoveLine(line)}
 											className='text-red-600 hover:text-red-700'>
 											<Trash2 className='h-4 w-4' />
 										</button>
@@ -308,13 +446,62 @@ const RegisterSale: React.FC = () => {
 						)}
 					</div>
 
-					<div className='flex items-center justify-between'>
-						<h3 className='text-lg font-bold text-aromas_gray_text'>
-							Total
-						</h3>
-						<p className='text-lg font-bold text-aromas_fucsia'>
-							${total.toFixed(2)}
-						</p>
+					<div data-tutorial='pos-coupon' className='grid gap-1.5'>
+						<label htmlFor='couponCode'>Cupón</label>
+						<Input
+							id='couponCode'
+							autoComplete='off'
+							value={couponCode}
+							onChange={(e) =>
+								setCouponCode(e.target.value.toUpperCase())
+							}
+							placeholder='Código de cupón (opcional)'
+							className={
+								pricing?.couponError
+									? 'border-red-500 focus-visible:ring-red-500'
+									: ''
+							}
+						/>
+						{pricing?.couponError && (
+							<p className='text-sm text-red-600'>
+								{pricing.couponError}
+							</p>
+						)}
+						{pricing?.coupon && (
+							<p className='text-sm text-aromas_fucsia'>
+								Cupón {pricing.coupon.code} aplicado.
+							</p>
+						)}
+					</div>
+
+					<div className='space-y-1'>
+						{pricing && pricing.discountTotal > 0 && (
+							<>
+								<div className='flex items-center justify-between text-sm text-aromas_gray_text'>
+									<span>Subtotal</span>
+									<span>
+										${pricing.subTotalPrice.toFixed(2)}
+									</span>
+								</div>
+								<div className='flex items-center justify-between text-sm text-aromas_fucsia'>
+									<span>Descuento</span>
+									<span>
+										-${pricing.discountTotal.toFixed(2)}
+									</span>
+								</div>
+							</>
+						)}
+						<div className='flex items-center justify-between'>
+							<h3 className='text-lg font-bold text-aromas_gray_text'>
+								Total
+							</h3>
+							<p className='flex items-center gap-2 text-lg font-bold text-aromas_fucsia'>
+								{pricingLoading && (
+									<Loader2 className='h-4 w-4 animate-spin' />
+								)}
+								${(pricing?.totalPrice ?? grossTotal).toFixed(2)}
+							</p>
+						</div>
 					</div>
 
 					<div data-tutorial='pos-payment' className='grid gap-1.5'>
@@ -345,7 +532,7 @@ const RegisterSale: React.FC = () => {
 							type='submit'
 							data-tutorial='pos-submit'
 							className='bg-aromas_pink text-aromas_gray_text'
-							disabled={submitting}>
+							disabled={submitting || pricingLoading}>
 							{submitting && (
 								<Loader2 className='mr-2 h-4 w-4 animate-spin' />
 							)}

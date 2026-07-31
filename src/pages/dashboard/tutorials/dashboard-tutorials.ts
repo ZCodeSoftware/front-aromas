@@ -283,6 +283,288 @@ export const dashboardTutorials: ITutorialSection[] = [
 		],
 	},
 	{
+		id: 'combo-list',
+		title: 'Combos · Lista de Combos',
+		summary:
+			'Los packs de productos que se venden como una sola unidad. El precio y el stock no se cargan a mano: salen de los productos que los componen.',
+		groups: [
+			{
+				title: 'Encabezado',
+				controls: [
+					{
+						label: 'Combos',
+						kind: 'navigation',
+						location: 'Botón centrado sobre la tabla',
+						what: 'Selecciona la vista de la pantalla. Hoy es la única disponible, así que queda siempre activa.',
+						steps: ['No requiere acción: ya está seleccionada al entrar.'],
+					},
+					showInactiveControl('los combos'),
+				],
+			},
+			{
+				title: 'Columnas de la tabla',
+				controls: [
+					{
+						label: 'Productos',
+						kind: 'secondary',
+						location: 'Segunda columna',
+						what: 'Cuántos productos entran en el combo. Al pasar el mouse muestra la lista con la cantidad de cada uno.',
+						steps: [
+							'Llevá el cursor sobre el texto subrayado con línea de puntos.',
+							'Leé el detalle en el globo que aparece.',
+						],
+						warning:
+							'Si aparece un triángulo rojo, alguno de los productos está desactivado y el combo no se puede vender hasta reactivarlo.',
+					},
+					{
+						label: 'Precio sin combo / Precio / Ahorro',
+						kind: 'secondary',
+						location: 'Columnas centrales',
+						what: '"Precio sin combo" es lo que costaría comprar los productos por separado; "Precio" es lo que paga el cliente; "Ahorro" es la diferencia.',
+						steps: [
+							'No requieren acción: se recalculan solos cada vez que se abre la pantalla.',
+						],
+						tip: 'Si cambiás el precio de un producto, el precio del combo se actualiza solo en el próximo ingreso.',
+					},
+					{
+						label: 'Stock',
+						kind: 'secondary',
+						location: 'Anteúltima columna',
+						what: 'Cuántos combos se pueden armar hoy. Lo define el producto que menos alcance, no un número que cargues vos.',
+						steps: ['No requiere acción.'],
+						warning:
+							'Un cero en rojo significa que falta stock de alguno de los productos: el combo no se va a poder comprar.',
+					},
+					activeSwitchControl('combo', 'el'),
+					editPencilControl('combo', 'el'),
+				],
+			},
+			modalFooterGroup('combo', 'Guardar cambios'),
+		],
+	},
+	{
+		id: 'create-combo',
+		title: 'Combos · Crear Combo',
+		summary:
+			'El alta de un pack. Se eligen los productos con su cantidad y después se decide cómo se calcula el precio.',
+		groups: [
+			{
+				title: 'Formulario',
+				controls: [
+					{
+						label: 'Nombre del Combo',
+						kind: 'secondary',
+						location: 'Primer campo del formulario',
+						what: 'El nombre que ve el cliente en la tienda. Entre 3 y 100 caracteres.',
+						steps: ['Escribí un nombre descriptivo, por ejemplo "Combo Relax".'],
+						tip: 'También se usa para nombrar la carpeta donde se guardan las imágenes, así que conviene que sea claro.',
+					},
+					{
+						label: 'Buscar producto + Cantidad + Agregar',
+						kind: 'secondary',
+						location: 'Bloque "Productos del combo"',
+						what: 'Arma la lista de productos que entran en el combo. La cantidad es por combo, no en total.',
+						steps: [
+							'Escribí al menos dos letras del nombre y esperá el desplegable.',
+							'Hacé clic en el producto de la lista.',
+							'Indicá cuántas unidades de ese producto lleva UN combo.',
+							'Hacé clic en "Agregar". Se repite por cada producto.',
+						],
+						tip: 'Si agregás dos veces el mismo producto se suman las cantidades en la misma línea. Cada línea avisa para cuántos combos alcanza su stock.',
+					},
+					{
+						label: 'Modo de precio',
+						kind: 'navigation',
+						location: 'Debajo de la lista de productos',
+						what: '"Descuento %" calcula el precio restando un porcentaje a la suma de los productos, y se actualiza solo si cambia un precio. "Precio fijo" usa el monto que escribas y no se mueve.',
+						steps: [
+							'Elegí el modo en el desplegable.',
+							'Completá el campo que aparece al lado: el porcentaje o el monto final.',
+						],
+						tip: 'El porcentaje es más cómodo para no quedar desactualizado cuando suben los precios.',
+					},
+					{
+						label: 'Resumen del combo',
+						kind: 'secondary',
+						location: 'Recuadro rosado sobre el cargador de imágenes',
+						what: 'Muestra en vivo la suma de los productos, el precio final, el ahorro y cuántos combos se pueden armar.',
+						steps: ['No requiere acción: se actualiza mientras editás.'],
+						warning:
+							'Si avisa que el stock es 0, el combo se va a crear pero no se va a poder comprar hasta que haya stock.',
+					},
+					{
+						label: 'Crear Combo',
+						kind: 'primary',
+						location: 'Abajo del formulario',
+						what: 'Guarda el combo. Primero suben las imágenes y después se envían los datos.',
+						steps: [
+							'Revisá que no haya mensajes en rojo.',
+							'Hacé clic en el botón y esperá el spinner.',
+						],
+						tip: 'El botón queda deshabilitado mientras falte el nombre o no haya al menos un producto.',
+					},
+				],
+			},
+		],
+	},
+	{
+		id: 'promotion-list',
+		title: 'Promociones · Lista de Promociones',
+		summary:
+			'Todos los descuentos del negocio en una tabla: los automáticos, los que necesitan cupón y los que tienen fecha de vencimiento.',
+		groups: [
+			{
+				title: 'Encabezado',
+				controls: [
+					{
+						label: 'Promociones',
+						kind: 'navigation',
+						location: 'Botón centrado sobre la tabla',
+						what: 'Selecciona la vista de la pantalla. Hoy es la única disponible.',
+						steps: ['No requiere acción: ya está seleccionada al entrar.'],
+					},
+					showInactiveControl('las promociones'),
+				],
+			},
+			{
+				title: 'Columnas de la tabla',
+				controls: [
+					{
+						label: 'Tipo',
+						kind: 'secondary',
+						location: 'Segunda columna',
+						what: 'Muestra el código si la promoción es un cupón, o "Automática" si se aplica sola sin que el cliente escriba nada.',
+						steps: ['No requiere acción.'],
+						tip: 'Solo las automáticas se muestran en la tienda con el precio tachado. Un cupón se aplica recién al finalizar la compra.',
+					},
+					{
+						label: 'Alcance',
+						kind: 'secondary',
+						location: 'Tercera columna',
+						what: 'A qué llega el descuento. Al pasar el mouse muestra la lista completa de categorías, productos o combos alcanzados.',
+						steps: ['Llevá el cursor sobre el texto subrayado con línea de puntos.'],
+						warning:
+							'Una promoción por categoría o por producto nunca entra dentro de un combo: sus productos ya se venden con descuento, y aplicar los dos descontaría lo mismo dos veces.',
+					},
+					{
+						label: 'Vigencia',
+						kind: 'secondary',
+						location: 'Quinta columna',
+						what: 'El período en el que la promoción está en vigor. "Sin vencimiento" significa que sigue activa hasta que la desactives.',
+						steps: ['No requiere acción.'],
+						warning:
+							'Si aparece "(vencida)" en rojo, la promoción ya no descuenta nada aunque el interruptor siga encendido.',
+					},
+					{
+						label: 'Usos',
+						kind: 'secondary',
+						location: 'Sexta columna',
+						what: 'Cuántas veces se canjeó, y sobre qué límite si tiene uno.',
+						steps: ['No requiere acción.'],
+						warning:
+							'En rojo significa que se agotó: el cupón deja de aplicarse aunque esté activo y vigente.',
+					},
+					activeSwitchControl('promoción', 'la'),
+					editPencilControl('promoción', 'la'),
+				],
+			},
+			modalFooterGroup('promoción', 'Guardar cambios'),
+		],
+	},
+	{
+		id: 'create-promotion',
+		title: 'Promociones · Crear Promoción',
+		summary:
+			'Un solo formulario cubre los tres casos: descuento por categoría, cupón con código y promoción por tiempo limitado. La diferencia está en qué campos completás.',
+		groups: [
+			{
+				title: 'Qué alcanza',
+				controls: [
+					{
+						label: 'Alcance',
+						kind: 'navigation',
+						location: 'Desplegable debajo de la descripción',
+						what: 'Decide a qué llega el descuento: todo el catálogo, ciertas categorías, sub-categorías, productos puntuales o combos.',
+						steps: [
+							'Elegí el alcance en el desplegable.',
+							'Si no es "Todo el catálogo", aparece a la derecha un selector múltiple para elegir a qué se aplica.',
+						],
+						tip: 'Lo que seleccionaste en un alcance se conserva si cambiás a otro y volvés, así podés comparar sin recargar.',
+					},
+					{
+						label: 'Selector múltiple del alcance',
+						kind: 'secondary',
+						location: 'A la derecha del desplegable de alcance',
+						what: 'Elige las categorías, productos o combos concretos. Sin al menos uno la promoción no se puede guardar.',
+						steps: [
+							'Abrí el selector y buscá por nombre.',
+							'Hacé clic en cada ítem para marcarlo o desmarcarlo.',
+							'Usá "Limpiar selección" para empezar de nuevo.',
+						],
+					},
+				],
+			},
+			{
+				title: 'Cuánto descuenta',
+				controls: [
+					{
+						label: 'Tipo de descuento + valor',
+						kind: 'secondary',
+						location: 'Fila debajo del alcance',
+						what: '"Porcentaje" descuenta una parte de cada producto alcanzado. "Monto fijo" descuenta esa plata del total del pedido, repartida entre los productos que alcanza.',
+						steps: [
+							'Elegí el tipo.',
+							'Escribí el valor: hasta 100 si es porcentaje, cualquier monto si es fijo.',
+						],
+						tip: 'Un monto fijo de $500 saca $500 del pedido en total, no $500 de cada producto.',
+					},
+					{
+						label: 'Código de cupón',
+						kind: 'secondary',
+						location: 'Campo debajo del descuento',
+						what: 'Convierte la promoción en un cupón: el cliente tiene que escribir ese código al finalizar la compra. Vacío significa que se aplica sola.',
+						steps: [
+							'Dejalo vacío para una promoción automática.',
+							'O escribí un código con letras, números, guiones y guiones bajos.',
+						],
+						warning:
+							'Dos promociones no pueden compartir el mismo código. Si ya existe, el formulario te avisa al guardar.',
+					},
+					{
+						label: 'Desde / Hasta',
+						kind: 'secondary',
+						location: 'Fila de fechas',
+						what: 'El período en el que la promoción está en vigor. Vacías significa sin límite de tiempo.',
+						steps: [
+							'Completá una, las dos o ninguna.',
+						],
+						tip: 'Para una promoción por tiempo limitado, completá las dos: fuera de ese rango no descuenta nada, aunque siga activa.',
+					},
+					{
+						label: 'Compra mínima / Usos totales / Usos por cliente',
+						kind: 'secondary',
+						location: 'Última fila del formulario',
+						what: 'Límites opcionales. Un 0 en cualquiera significa "sin límite".',
+						steps: ['Completá solo los que necesites.'],
+						warning:
+							'El límite por cliente no se puede aplicar en ventas de mostrador sin una cuenta asociada, porque no hay a quién contarle los usos.',
+					},
+					{
+						label: 'Crear Promoción',
+						kind: 'primary',
+						location: 'Abajo del formulario',
+						what: 'Guarda la promoción. Si es automática, empieza a aplicarse de inmediato en la tienda.',
+						steps: [
+							'Revisá que no haya mensajes en rojo.',
+							'Hacé clic en el botón y esperá el spinner.',
+						],
+						tip: 'Las promociones automáticas no se acumulan entre sí: en cada producto gana la que más descuenta. Un cupón sí se suma encima.',
+					},
+				],
+			},
+		],
+	},
+	{
 		id: 'create-product',
 		title: 'Productos · Crear Producto',
 		summary:
@@ -622,22 +904,33 @@ export const dashboardTutorials: ITutorialSection[] = [
 		id: 'pos-register-sale',
 		title: 'Punto de Venta · Registrar Venta',
 		summary:
-			'La pantalla de venta en mostrador. Se arma una lista de productos, se elige el método de pago y se confirma; la venta descuenta stock.',
+			'La pantalla de venta en mostrador. Se arma una lista de productos o combos, se puede aplicar un cupón, y al confirmar se descuenta stock.',
 		groups: [
 			{
 				title: 'Armado de la venta',
 				controls: [
 					{
-						label: 'Resultados de "Buscar producto"',
+						label: 'Vender (Producto / Combo)',
+						kind: 'navigation',
+						location: 'Primer desplegable de la fila de búsqueda',
+						what: 'Cambia en qué catálogo busca el buscador de al lado. Los combos se venden como una sola línea y descuentan el stock de cada producto que los compone.',
+						steps: [
+							'Elegí "Producto" o "Combo" antes de escribir.',
+							'El buscador se limpia al cambiar, para que no queden resultados del otro catálogo.',
+						],
+						tip: 'Podés mezclar productos sueltos y combos en la misma venta.',
+					},
+					{
+						label: 'Resultados de la búsqueda',
 						kind: 'secondary',
 						location: 'Lista que se despliega bajo el buscador',
-						what: 'Cada resultado es un botón que selecciona ese producto. Muestra nombre, precio y stock disponible.',
+						what: 'Cada resultado es un botón que selecciona ese ítem. Muestra nombre, precio y stock disponible.',
 						steps: [
-							'Escribí al menos dos letras del nombre en "Buscar producto".',
-							'Esperá un instante: la búsqueda se dispara sola y solo trae productos activos.',
+							'Escribí al menos dos letras del nombre en el buscador.',
+							'Esperá un instante: la búsqueda se dispara sola y solo trae ítems activos.',
 							'Hacé clic en el resultado que corresponda; su nombre queda en el buscador.',
 						],
-						tip: 'Fijate en el stock que muestra cada resultado antes de cargar la cantidad.',
+						tip: 'El stock de un combo es cuántos combos se pueden armar, no unidades sueltas.',
 					},
 					{
 						label: 'Agregar',
@@ -663,6 +956,29 @@ export const dashboardTutorials: ITutorialSection[] = [
 			{
 				title: 'Cierre de la venta',
 				controls: [
+					{
+						label: 'Cupón',
+						kind: 'secondary',
+						location: 'Campo debajo de la lista de la venta',
+						what: 'Aplica un código de cupón a la venta. El total se recalcula contra el servidor, igual que en la tienda online.',
+						steps: [
+							'Escribí el código; se pasa a mayúsculas solo.',
+							'Esperá un instante: el total se vuelve a pedir y aparece el desglose con el descuento.',
+							'Si el cupón no sirve, el motivo aparece en rojo debajo del campo.',
+						],
+						tip: 'Las promociones automáticas se aplican solas, sin escribir nada. El cupón se suma encima de ellas.',
+						warning:
+							'El límite de usos por cliente no se puede controlar en una venta de mostrador sin cuenta asociada.',
+					},
+					{
+						label: 'Subtotal / Descuento / Total',
+						kind: 'secondary',
+						location: 'Bloque sobre el método de pago',
+						what: 'El desglose lo calcula el servidor, no la pantalla. El descuento solo aparece si hay alguno.',
+						steps: ['No requiere acción: se actualiza al cambiar la venta.'],
+						warning:
+							'Mientras gira el indicador al lado del total, la cifra todavía no es definitiva. El botón de registrar queda deshabilitado hasta que termine.',
+					},
 					{
 						label: 'Método de pago',
 						kind: 'secondary',

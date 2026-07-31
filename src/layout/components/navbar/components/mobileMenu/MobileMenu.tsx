@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { useClickOutside } from '@/hooks/useClickOutside';
+import CatalogLinks from '../catalogLinks/CatalogLinks';
 
 interface MobileMenuProps {
 	onClose: () => void;
@@ -59,24 +60,15 @@ const MobileMenu = ({ onClose }: MobileMenuProps) => {
 						className='py-3 text-lg text-aromas_gray_text hover:text-gray-900 border-b border-aromas_gray_line/60'>
 						Inicio
 					</a>
-					<a
-						href='#'
-						onClick={handleClose}
-						className='py-3 text-lg text-aromas_gray_text hover:text-gray-900 border-b border-aromas_gray_line/60'>
-						Velas
-					</a>
-					<a
-						href='#'
-						onClick={handleClose}
-						className='py-3 text-lg text-aromas_gray_text hover:text-gray-900 border-b border-aromas_gray_line/60'>
-						Inciensos
-					</a>
-					<a
-						href='#'
-						onClick={handleClose}
-						className='py-3 text-lg text-aromas_gray_text hover:text-gray-900'>
-						Accesorios
-					</a>
+					<CatalogLinks
+						className='w-full py-3 text-left text-lg text-aromas_gray_text hover:text-gray-900 border-b border-aromas_gray_line/60'
+						onSelect={handleClose}
+						renderItem={(link, key) => (
+							<div key={key} className='contents'>
+								{link}
+							</div>
+						)}
+					/>
 				</nav>
 			</div>
 		</div>

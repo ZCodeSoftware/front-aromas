@@ -13,13 +13,15 @@ import {
 	DialogClose,
 } from '@/components/ui/dialog';
 import ImageCrop from './utils/ImageCrop';
+import type { IComboForm } from '../dashboardCombos/createCombo/models/combo-form.interface';
 import type { IProductForm } from '../dashboardProducts/createProduct/models/product-form.interface';
 import type { IPreset } from './models/upload-image-preset.interface';
 
 interface CroppedFilesState {
 	croppedImages: Blob[];
 }
-type FormTypes = IProductForm;
+/** Every form that can carry images. All that is read from it is `name`. */
+type FormTypes = IProductForm | IComboForm;
 interface FilePreview {
 	file: File | Blob;
 	preview: string;

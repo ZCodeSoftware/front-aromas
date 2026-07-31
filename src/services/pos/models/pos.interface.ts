@@ -1,7 +1,9 @@
 import type { IOrderStatusCode } from '@/services/order/models/order.interface';
 
+/** Exactly one of productId / comboId; the API rejects both or neither. */
 export interface IPosSaleItemPayload {
-	productId: string;
+	productId?: string;
+	comboId?: string;
 	quantity: number;
 }
 
@@ -17,6 +19,8 @@ export interface ICreatePosSalePayload {
 	paymentMethod: string;
 	userId?: string;
 	customer?: IPosCustomerPayload;
+	/** A code that cannot be applied fails the sale, unlike in the preview. */
+	couponCode?: string;
 }
 
 export interface IPosSaleFilters {
