@@ -18,5 +18,5 @@ AppApiGateWay.interceptors.request.use(
 
 AppApiGateWay.interceptors.response.use(
 	AppInterceptors.responseSuccess,
-	AppInterceptors.responseError
+	AppInterceptors.responseAuthError
 );

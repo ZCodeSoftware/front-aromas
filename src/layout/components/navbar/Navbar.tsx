@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import SearchBar from './components/searchBar/SearchBar';
 import MobileMenu from './components/mobileMenu/MobileMenu';
+import CatalogLinks from './components/catalogLinks/CatalogLinks';
 import Profile from '@/pages/profile/Profile';
 import Cart from '@/pages/cart/Cart';
 import {
@@ -34,6 +35,12 @@ const Navbar = () => {
 		if (isAuthenticated) fetchCart();
 	}, [isAuthenticated, fetchCart]);
 
+	// The profile panel is auth-only: hide it when the session drops (expired
+	// token) so it doesn't sit behind the login modal.
+	useEffect(() => {
+		if (!isAuthenticated) setIsProfileModalOpen(false);
+	}, [isAuthenticated]);
+
 	if (typeof window !== 'undefined') {
 		document.body.style.overflow =
 			isSearchOpen || isProfileModalOpen || isCartOpen || isMobileMenuOpen
@@ -50,7 +57,7 @@ const Navbar = () => {
 			) : (
 				<nav className='bg-aromas_nav_bg shadow-md py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center'>
 					<div className='flex justify-between items-center w-auto lg:w-[30%]'>
-						<div className='text-xl text-center font-bold text-aromas_fucsia'>
+						<div className='text-xl text-center font-bold text-aromas_fucsia whitespace-nowrap'>
 							Aromas y Armonía
 						</div>
 						<ul className='hidden lg:flex space-x-6 text-center md:ml-6'>
@@ -61,27 +68,13 @@ const Navbar = () => {
 									Inicio
 								</a>
 							</li>
-							<li>
-								<a
-									href='#'
-									className='text-aromas_gray_text hover:text-gray-900'>
-									Velas
-								</a>
-							</li>
-							<li>
-								<a
-									href='#'
-									className='text-aromas_gray_text hover:text-gray-900'>
-									Inciensos
-								</a>
-							</li>
-							<li>
-								<a
-									href='#'
-									className='text-aromas_gray_text hover:text-gray-900'>
-									Accesorios
-								</a>
-							</li>
+							<CatalogLinks
+								renderItem={(link, key) => (
+									<li key={key} className='whitespace-nowrap'>
+										{link}
+									</li>
+								)}
+							/>
 						</ul>
 					</div>
 					<div>

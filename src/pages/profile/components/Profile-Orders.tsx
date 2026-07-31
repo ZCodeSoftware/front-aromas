@@ -158,6 +158,7 @@ const ProfileOrders = () => {
 									<img
 										src={
 											item.product?.images?.[0] ||
+											item.combo?.images?.[0] ||
 											productImage
 										}
 										alt={item.name}
@@ -166,7 +167,25 @@ const ProfileOrders = () => {
 									<div className='w-full'>
 										<p className='text-aromas_gray_text font-bold'>
 											{item.name}
+											{item.itemType === 'COMBO' && (
+												<span className='ml-2 rounded bg-aromas_fucsia px-1.5 py-0.5 text-xs text-white'>
+													COMBO
+												</span>
+											)}
 										</p>
+										{/* The snapshot of what the combo held when it
+										    was bought, so the receipt stays readable
+										    even if the combo was edited since. */}
+										{!!item.components?.length && (
+											<p className='text-xs text-aromas_gray_text'>
+												{item.components
+													.map(
+														(component) =>
+															`${component.quantity} x ${component.name}`
+													)
+													.join(' · ')}
+											</p>
+										)}
 										<div className='w-2/4 flex justify-between'>
 											<p className='text-aromas_gray_text font-medium'>
 												{`Cantidad: ${item.quantity}`}
@@ -176,6 +195,11 @@ const ProfileOrders = () => {
 												${item.unitPrice}
 											</p>
 										</div>
+										{!!item.discount && (
+											<p className='text-xs text-aromas_fucsia'>
+												{`Descuento: -$${item.discount.toFixed(2)}`}
+											</p>
+										)}
 									</div>
 								</div>
 							))}
@@ -189,6 +213,17 @@ const ProfileOrders = () => {
 									${order.subTotalPrice}
 								</span>
 							</div>
+							{!!order.discountTotal && (
+								<div className='flex justify-between'>
+									<span className='text-aromas_fucsia'>
+										Descuento
+										{order.coupon && ` (${order.coupon})`}
+									</span>
+									<span className='text-aromas_fucsia'>
+										-${order.discountTotal.toFixed(2)}
+									</span>
+								</div>
+							)}
 							{order.shippingPrice > 0 && (
 								<div className='flex justify-between'>
 									<span className='text-aromas_gray_text'>
